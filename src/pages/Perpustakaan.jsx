@@ -4,11 +4,11 @@ import {
 	ChevronRight,
 	HeartIcon,
 	SearchIcon,
+	ThumbsUpIcon,
 } from "lucide-react";
 import Header from "../components/Header";
 import { TopCreatorData } from "../data/TopCreatorData";
 import Star from "../../public/icon/star";
-import ThumbsUp from "../../public/icon/thumbsUp";
 import Filter from "../../public/icon/filter";
 import Major from "../../public/icon/major";
 import { Navigate } from "react-router-dom";
@@ -16,7 +16,9 @@ import { useEffect, useState } from "react";
 import {
 	favoriteNoteApi,
 	getAllNoteApi,
+	likeNoteApi,
 	unFavoriteNoteApi,
+	unLikeNoteApi,
 } from "../services/notes";
 
 export default function Perpustakaan() {
@@ -28,16 +30,52 @@ export default function Perpustakaan() {
 		});
 	}, []);
 
-	const favoriteNote = (id) => {
-		favoriteNoteApi(id, localStorage.getItem("token")).then((result) => {
-			console.log(result);
-		});
+	const likeNote = async (id) => {
+		try {
+			await likeNoteApi(id, localStorage.getItem("token"));
+
+			getAllNoteApi(localStorage.getItem("token")).then((result) => {
+				setAllNotes(result?.data);
+			});
+		} catch (error) {
+			console.error("Failed to like note:", error);
+		}
 	};
 
-	const unFavoriteNote = (id) => {
-		unFavoriteNoteApi(id, localStorage.getItem("token")).then((result) => {
-			console.log(result);
-		});
+	const unLikeNote = async (id) => {
+		try {
+			await unLikeNoteApi(id, localStorage.getItem("token"));
+
+			getAllNoteApi(localStorage.getItem("token")).then((result) => {
+				setAllNotes(result?.data);
+			});
+		} catch (error) {
+			console.error("Failed to unlike note:", error);
+		}
+	};
+
+	const favoriteNote = async (id) => {
+		try {
+			await favoriteNoteApi(id, localStorage.getItem("token"));
+
+			getAllNoteApi(localStorage.getItem("token")).then((result) => {
+				setAllNotes(result?.data);
+			});
+		} catch (error) {
+			console.error("Failed to favorite note:", error);
+		}
+	};
+
+	const unFavoriteNote = async (id) => {
+		try {
+			await unFavoriteNoteApi(id, localStorage.getItem("token"));
+
+			getAllNoteApi(localStorage.getItem("token")).then((result) => {
+				setAllNotes(result?.data);
+			});
+		} catch (error) {
+			console.error("Failed to unfavorite note:", error);
+		}
 	};
 
 	if (!localStorage.getItem("token")) {
@@ -153,9 +191,6 @@ export default function Perpustakaan() {
 							<p className="text-white">
 								Yuk jual catatan kamu. Pastikan lengkap, jelas, dan menarik ya!{" "}
 							</p>
-							<p className="bg-white text-black font-medium px-5 py-2 rounded-md">
-								Tambah
-							</p>
 						</div>
 						<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 						<div className="grid grid-cols-12 gap-5">
@@ -168,10 +203,21 @@ export default function Perpustakaan() {
 												backgroundImage: `url(${product.gambar_preview})`,
 											}}>
 											<div className="z-10 w-full flex justify-end">
-												<div className="flex items-center bg-white px-5 py-3 rounded-md gap-2">
-													<ThumbsUp className="w-6 h-6" />
-													<p className="text-amber-500 font-medium">Favorit</p>
-												</div>
+												{product.isFavorite ? (
+													<div
+														onClick={() => unFavoriteNote(product.note_id)}
+														className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
+														<ThumbsUpIcon className="w-6 h-6 text-amber-500 fill-amber-400" />
+														<p className="text-amber-500 font-medium">Favorit</p>
+													</div>
+												) : (
+													<div
+														onClick={() => favoriteNote(product.note_id)}
+														className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
+														<ThumbsUpIcon className="w-6 h-6 text-gray-500 fill-gray-400" />
+														<p className="text-gray-500 font-medium">Favorit</p>
+													</div>
+												)}
 											</div>
 											<div className="w-full z-10">
 												<p className="text-2xl text-white">{product.judul}</p>
@@ -199,15 +245,15 @@ export default function Perpustakaan() {
 														<p className="text-gray-400">Top Creator</p>
 													</div>
 												</div>
-												{product.isFavorite ? (
+												{product.isLiked ? (
 													<HeartIcon
-														onClick={() => unFavoriteNote(product.note_id)}
-														className="w-7 h-7 text-red-600 fill-red-400"
+														onClick={() => unLikeNote(product.note_id)}
+														className="cursor-pointer w-7 h-7 text-red-600 fill-red-400"
 													/>
 												) : (
 													<HeartIcon
-														onClick={() => favoriteNote(product.note_id)}
-														className="w-7 h-7 text-gray-400 fill-transparent"
+														onClick={() => likeNote(product.note_id)}
+														className="cursor-pointer w-7 h-7 text-gray-400 fill-transparent"
 													/>
 												)}
 											</div>

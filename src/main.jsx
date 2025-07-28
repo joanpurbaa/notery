@@ -14,6 +14,8 @@ import Checkout from "./pages/Checkout.jsx";
 import TambahProduk from "./pages/AddProduct.jsx";
 import Profil from "./pages/Profil.jsx";
 import DetailProduct from "./pages/DetailProduct.jsx";
+import LatestNote from "./pages/LatestNote.jsx";
+import MostLikedNote from "./pages/MostLikedNote.jsx";
 
 const ErrorBoundary = () => (
 	<div className="min-h-screen flex items-center justify-center">
@@ -37,6 +39,16 @@ const router = createBrowserRouter([
 	{
 		path: "/",
 		element: <Home />,
+		errorElement: <ErrorBoundary />,
+	},
+	{
+		path: "/latest-note",
+		element: <LatestNote />,
+		errorElement: <ErrorBoundary />,
+	},
+	{
+		path: "/most-liked-note",
+		element: <MostLikedNote />,
 		errorElement: <ErrorBoundary />,
 	},
 	{

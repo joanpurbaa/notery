@@ -37,13 +37,13 @@ export const ProdiData = [
   // { prodi_id: 25, name: "Desain Interior", fakultas_id: 6 },
   
   // Fakultas Ilmu Terapan
-  // { prodi_id: 26, name: "D3 Teknik Telekomunikasi", fakultas_id: 7 },
+  { prodi_id: 26, name: "D3 Teknik Telekomunikasi", fakultas_id: 7 },
   { prodi_id: 2, name: "D3 Rekayasa Perangkat Lunak Aplikasi", fakultas_id: 7 },
-  // { prodi_id: 28, name: "D3 Sistem Informasi", fakultas_id: 7 },
-  // { prodi_id: 29, name: "D3 Sistem Informasi Akuntansi", fakultas_id: 7 },
-  // { prodi_id: 30, name: "D3 Teknologi Komputer", fakultas_id: 7 },
-  // { prodi_id: 31, name: "D3 Manajemen Pemasaran", fakultas_id: 7 },
-  // { prodi_id: 32, name: "D3 Hospitality & Culinary Art (Perhotelan)", fakultas_id: 7 },
-  // { prodi_id: 33, name: "S1 Terapan Teknologi Rekayasa Multimedia", fakultas_id: 7 },
-  // { prodi_id: 34, name: "S1 Terapan Sistem Informasi Kota Cerdas", fakultas_id: 7 },
+  { prodi_id: 28, name: "D3 Sistem Informasi", fakultas_id: 7 },
+  { prodi_id: 29, name: "D3 Sistem Informasi Akuntansi", fakultas_id: 7 },
+  { prodi_id: 30, name: "D3 Teknologi Komputer", fakultas_id: 7 },
+  { prodi_id: 31, name: "D3 Manajemen Pemasaran", fakultas_id: 7 },
+  { prodi_id: 32, name: "D3 Hospitality & Culinary Art (Perhotelan)", fakultas_id: 7 },
+  { prodi_id: 33, name: "S1 Terapan Teknologi Rekayasa Multimedia", fakultas_id: 7 },
+  { prodi_id: 34, name: "S1 Terapan Sistem Informasi Kota Cerdas", fakultas_id: 7 },
 ];

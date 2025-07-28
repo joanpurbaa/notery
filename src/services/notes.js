@@ -76,16 +76,18 @@ export const showNoteById = async (id, token) => {
 
 export const likeNoteApi = async (id, token) => {
   try {
-    const res = await axios.post(`${API_BASE}/notes/${id}/like`, {
+    const res = await axios.post(`${API_BASE}/notes/${id}/like`, {}, {
       headers: {
         Authorization: `Bearer ${token}`,
-        Accept: "application/json"
+        Accept: "application/json",
+        "Content-Type": "application/json"
       }
     })
 
-    return(res.data)
+    return res.data
   } catch (error) {
     console.error("Error in likeNoteApi:", error)
+    throw error
   }
 }
 
@@ -98,9 +100,10 @@ export const unLikeNoteApi = async (id, token) => {
       }
     })
 
-    return(res.data)
+    return res.data
   } catch (error) {
     console.error("Error in unLikeNoteApi:", error)
+    throw error
   }
 }
 
@@ -120,10 +123,11 @@ export const showNoteByUserId = async (token) => {
 
 export const favoriteNoteApi = async (id, token) => {
   try {
-    const res = await axios.post(`${API_BASE}/notes/${id}/favorite`, {
+    const res = await axios.post(`${API_BASE}/notes/${id}/favorite`, {}, {
       headers: {
         Authorization: `Bearer ${token}`,
-        Accept: "application/json"
+        Accept: "application/json",
+        "Content-Type": "application/json"
       }
     })
 
@@ -150,7 +154,7 @@ export const unFavoriteNoteApi = async (id, token) => {
 
 export const getReviewApi = async (id, token) => {
   try {
-    const res = await axios.delete(`${API_BASE}/notes/${id}/reviews`, {
+    const res = await axios.get(`${API_BASE}/notes/${id}/reviews`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json"
@@ -162,3 +166,109 @@ export const getReviewApi = async (id, token) => {
     console.error("Error in getReviewApi:", error)
   }
 }
+
+export const addReviewApi = async (formData, id, token) => {
+  try {
+    const res = await axios.post(`${API_BASE}/notes/${id}/reviews`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
+      }
+    })
+
+    return(res.data)
+  } catch (error) {
+    console.error("Error in addReviewApi:", error)
+  }
+}
+
+export const voteReviewApi = async (id, token, formData) => {
+  try {
+    const res = await axios.post(`${API_BASE}/reviews/${id}/vote`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
+      }
+    })
+
+    return(res.data)
+  } catch (error) {
+    console.error("Error in voteReviewApi:", error)
+  }
+}
+
+export const buyNoteApi = async (id, token) => {
+  const res = await axios.post(`${API_BASE}/notes/${id}/buy`, {}, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }
+  })
+
+  return(res.data)
+}
+
+export const updatePaymentStatusApi = async (paymentData, token) => {
+    try {
+        const response = await fetch(`${API_BASE}/payment/manual-update`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(paymentData)
+        });
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error updating payment status:', error);
+        throw error;
+    }
+};
+
+export const getTransactionStatusApi = async (transactionId, token) => {
+    try {
+        const response = await fetch(`${API_BASE}/payment/status/${transactionId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error getting transaction status:', error);
+        throw error;
+    }
+};
+
+export const getPurchaseHistoryApi = async (token) => {
+    try {
+        const response = await fetch(`${API_BASE}/user/purchases`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error getting purchase history:', error);
+        throw error;
+    }
+};

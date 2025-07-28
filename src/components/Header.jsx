@@ -488,7 +488,6 @@ export default function Header() {
 													)}
 												</div>
 
-												{/* Selection Counter */}
 												<div className="text-xs text-gray-500 mt-1">
 													{selectedTags.length}/{maxTagsSelections} jenis materi dipilih
 												</div>
