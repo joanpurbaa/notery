@@ -1,10 +1,13 @@
 import {
 	ChevronDown,
-	HeartIcon,
+	MessageCircle,
 	PlusIcon,
 	StarIcon,
 	ThumbsDown,
 	ThumbsUpIcon,
+	Send,
+	X,
+	Minimize2,
 } from "lucide-react";
 import Header from "../components/Header";
 import {
@@ -14,6 +17,10 @@ import {
 	showNoteById,
 	voteReviewApi,
 	updatePaymentStatusApi,
+	getChatRoomMessagesApi,
+	sendChatMessageApi,
+	createOrGetChatRoomApi,
+	getNoteFileApi,
 } from "../services/notes";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
@@ -26,10 +33,16 @@ export default function DetailProduct() {
 	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 	const [paymentStatus, setPaymentStatus] = useState(null);
 
+	const [isChatOpen, setIsChatOpen] = useState(false);
+	const [isChatMinimized, setIsChatMinimized] = useState(false);
+	const [chatMessage, setChatMessage] = useState("");
+	const [chatMessages, setChatMessages] = useState([]);
+	const [chatRoomId, setChatRoomId] = useState(null);
+	const [isChatLoading, setIsChatLoading] = useState(false);
+	const [isSendingMessage, setIsSendingMessage] = useState(false);
+
 	const formComplete = comment && rating;
-
 	const formData = new FormData();
-
 	const [detailNote, setDetailNote] = useState();
 	const [review, setReview] = useState();
 
@@ -63,6 +76,8 @@ export default function DetailProduct() {
 		);
 	}, [productId]);
 
+	console.log(detailNote);
+
 	useEffect(() => {
 		getReviewApi(productId, localStorage.getItem("token")).then((result) => {
 			setReview(result?.data?.reviews);
@@ -84,6 +99,81 @@ export default function DetailProduct() {
 			}
 		};
 	}, []);
+
+	// Load chat room when chat is opened
+	const loadChatRoom = async () => {
+		try {
+			setIsChatLoading(true);
+
+			// Step 1: Create or get chat room
+			const chatRoomResponse = await createOrGetChatRoomApi(
+				productId,
+				localStorage.getItem("token")
+			);
+			const chatRoomId = chatRoomResponse?.data?.chat_room_id;
+
+			if (!chatRoomId) {
+				throw new Error("Failed to get chat room ID");
+			}
+
+			setChatRoomId(chatRoomId);
+
+			// Step 2: Load existing messages
+			const messagesResponse = await getChatRoomMessagesApi(
+				chatRoomId,
+				localStorage.getItem("token")
+			);
+
+			const messages = messagesResponse?.data || [];
+
+			const getCurrentUserId = () => {
+				// Implementasikan sesuai dengan struktur aplikasi Anda
+				// Bisa dari localStorage, JWT token, atau user context
+				const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+				return userData.id || userData.user_id;
+			};
+
+			// PERBAIKAN UTAMA: Tentukan siapa user saat ini
+			const currentUserId = getCurrentUserId(); // Implementasikan fungsi ini
+
+			const transformedMessages = messages.map((msg, index) => {
+				// Logika untuk menentukan apakah pesan dari user saat ini atau lawan chat
+				const isCurrentUserMessage =
+					msg.sender_id === currentUserId ||
+					msg.sender_type === "buyer" || // Sesuaikan dengan logika API Anda
+					msg.user_id === currentUserId; // Atau field lain yang menandakan pengirim
+
+				return {
+					id: msg.id || index,
+					text: msg.pesan || msg.message,
+					sender: isCurrentUserMessage ? "user" : "seller",
+					timestamp: new Date(msg.created_at || msg.timestamp),
+					senderName: isCurrentUserMessage
+						? "You"
+						: detailNote?.seller?.username || "Seller",
+					senderAvatar: isCurrentUserMessage
+						? "/api/placeholder/40/40"
+						: detailNote?.seller?.foto_profil || "/api/placeholder/40/40",
+				};
+			});
+
+			setChatMessages(transformedMessages);
+		} catch (error) {
+			console.error("Error loading chat room:", error);
+			setChatMessages([
+				{
+					id: 1,
+					text: "Halo! Ada yang bisa saya bantu mengenai produk ini?",
+					sender: "seller",
+					timestamp: new Date(Date.now() - 1000 * 60 * 5),
+					senderName: detailNote?.seller?.username || "Seller",
+					senderAvatar: detailNote?.seller?.foto_profil || "/api/placeholder/40/40",
+				},
+			]);
+		} finally {
+			setIsChatLoading(false);
+		}
+	};
 
 	const handleLike = (reviewId, status) => {
 		formData.append("tipe_vote", status);
@@ -190,6 +280,79 @@ export default function DetailProduct() {
 		}
 	};
 
+	// Chat functions
+	const handleChatToggle = async () => {
+		if (!isChatOpen) {
+			setIsChatOpen(true);
+			setIsChatMinimized(false);
+			await loadChatRoom();
+		} else {
+			setIsChatOpen(false);
+			setIsChatMinimized(false);
+		}
+	};
+
+	const handleChatMinimize = () => {
+		setIsChatMinimized(true);
+	};
+
+	const handleChatMaximize = () => {
+		setIsChatMinimized(false);
+	};
+
+	const handleChatClose = () => {
+		setIsChatOpen(false);
+		setIsChatMinimized(false);
+	};
+
+	const handleSendMessage = async (e) => {
+		e.preventDefault();
+		if (!chatMessage.trim() || !chatRoomId || isSendingMessage) return;
+
+		try {
+			setIsSendingMessage(true);
+
+			// Add message to UI immediately for better UX
+			const newMessage = {
+				id: Date.now(),
+				text: chatMessage,
+				sender: "user", // Ini konsisten sebagai user
+				timestamp: new Date(),
+				senderName: "You",
+				senderAvatar: "/api/placeholder/40/40",
+			};
+
+			setChatMessages((prev) => [...prev, newMessage]);
+			const messageToSend = chatMessage; // Simpan pesan sebelum di-clear
+			setChatMessage("");
+
+			// Send message to API
+			await sendChatMessageApi(
+				chatRoomId,
+				messageToSend,
+				localStorage.getItem("token")
+			);
+
+			// PERBAIKAN: Jangan reload semua messages, cukup konfirmasi pesan terkirim
+			// Atau jika harus reload, pastikan mapping sender_type yang benar
+		} catch (error) {
+			console.error("Error sending message:", error);
+			// Remove the optimistic message if sending failed
+			setChatMessages((prev) => prev.slice(0, -1));
+			// setChatMessage(messageToSend); // Restore the message in input
+			alert("Gagal mengirim pesan. Silakan coba lagi.");
+		} finally {
+			setIsSendingMessage(false);
+		}
+	};
+
+	const formatTime = (timestamp) => {
+		return new Date(timestamp).toLocaleTimeString("id-ID", {
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
+
 	const PaymentStatusMessage = () => {
 		if (!paymentStatus) return null;
 
@@ -221,12 +384,18 @@ export default function DetailProduct() {
 		);
 	};
 
+	const handleOpenFile = () => {
+		getNoteFileApi(productId, localStorage.getItem("token")).then((data) =>
+			window.open(data.data.files[0].path_file, "_blank")
+		);
+	};
+
 	if (!localStorage.getItem("token")) {
 		return <Navigate to="/login" replace />;
 	}
 
 	return (
-		<main className="w-full h-screen bg-[#F9F9F9]">
+		<main className="w-full h-screen bg-[#F9F9F9] relative">
 			<Header />
 			<section className="grid grid-cols-12 items-start pt-30 pb-10 px-10 gap-10">
 				<p className="col-span-12 bg-white text-xl p-4 rounded-lg shadow-md">
@@ -252,20 +421,13 @@ export default function DetailProduct() {
 										)}
 									</div>
 								</div>
-								<div className="flex items-center text-gray-400 gap-2">
-									<PlusIcon />
-									<p>Ulasan</p>
-								</div>
 							</div>
 							<img
 								className="w-full h-[350px] object-cover object-top rounded-md"
 								src={detailNote.gambar_preview}
 								alt=""
 							/>
-							<div className="flex justify-between items-center">
-								<p className="text-xl font-semibold">{detailNote.judul}</p>
-								<HeartIcon className="text-gray-400" />
-							</div>
+							<p className="text-xl font-semibold">{detailNote.judul}</p>
 							<div className="flex gap-2">
 								{detailNote.tags &&
 									detailNote.tags.map((data, index) => (
@@ -289,17 +451,17 @@ export default function DetailProduct() {
 									</p>
 								</div>
 								<p className="font-semibold">
-									Rp{" "}
-									{detailNote.harga.toString().length === 5
-										? `${detailNote.harga.toString().slice(0, 2)}.${detailNote.harga
-												.toString()
-												.slice(2)}`
-										: detailNote.harga}
+									Rp {new Intl.NumberFormat("id-ID").format(detailNote.harga)}
 								</p>
 							</div>
 							<div className="flex gap-2">
+								<div
+									onClick={handleChatToggle}
+									className="cursor-pointer h-full border-2 border-[#5289c7] p-2 rounded-md hover:bg-[#5289c7] hover:bg-opacity-10 transition-colors">
+									<MessageCircle className="h-full w-10 fill-[#5289c7] text-[#5289c7]" />
+								</div>
 								<button
-									onClick={handleBuy}
+									onClick={detailNote.isBuy ? handleOpenFile : handleBuy}
 									disabled={isProcessingPayment || paymentStatus === "success"}
 									className={`
 										w-full rounded-md p-3 transition-colors
@@ -311,7 +473,9 @@ export default function DetailProduct() {
 												: "cursor-pointer bg-primary-700 hover:bg-primary-800 text-white"
 										}
 									`}>
-									{isProcessingPayment
+									{detailNote.isBuy
+										? "Buka"
+										: isProcessingPayment
 										? "Memproses..."
 										: paymentStatus === "success"
 										? "Sudah Dibeli"
@@ -362,19 +526,6 @@ export default function DetailProduct() {
 														<div className="ps-[51px] space-y-5">
 															<p className="text-gray-400">{data.reviewer.review}</p>
 
-															{data.reviewer.seller_response && (
-																<div className="bg-gray-50 border-l-4 border-[#5289C7] p-3 rounded-r-md">
-																	<div className="flex items-center gap-2 mb-2">
-																		<span className="text-sm font-semibold text-primary-700">
-																			Respon Penjual:
-																		</span>
-																	</div>
-																	<p className="text-gray-600 text-sm">
-																		{data.reviewer.seller_response.response}
-																	</p>
-																</div>
-															)}
-
 															<div className="flex justify-between items-center">
 																<div className="flex items-center gap-3">
 																	<div className="flex items-center gap-2">
@@ -392,14 +543,6 @@ export default function DetailProduct() {
 																		{data.reviewer.jumlah_like}
 																	</div>
 																</div>
-																{data.reviewer.seller_response != null ? (
-																	<div className="flex items-center gap-2 text-blue-600 text-sm">
-																		<span>Penjual telah merespon</span>
-																		<ChevronDown />
-																	</div>
-																) : (
-																	<div></div>
-																)}
 															</div>
 														</div>
 														<div className="h-[0.5px] bg-[#E5E5E5] my-4"></div>
@@ -450,6 +593,135 @@ export default function DetailProduct() {
 					</>
 				)}
 			</section>
+
+			{/* Chat Window */}
+			{isChatOpen && (
+				<div
+					className={`fixed bottom-4 right-4 bg-white rounded-lg shadow-2xl border border-gray-200 transition-all duration-300 ${
+						isChatMinimized ? "w-80 h-14" : "w-96 h-[500px]"
+					} z-50`}>
+					{/* Chat Header */}
+					<div className="flex items-center justify-between p-4 border-b border-gray-200 bg-[#5289C7] text-white rounded-t-lg">
+						<div className="flex items-center gap-3">
+							<img
+								className="w-8 h-8 rounded-full"
+								src={detailNote?.seller?.foto_profil || "/api/placeholder/32/32"}
+								alt="Seller"
+							/>
+							<div>
+								<h3 className="font-semibold text-sm">
+									{detailNote?.seller?.username || "Seller"}
+								</h3>
+								<p className="text-xs opacity-90">
+									{isChatLoading ? "Memuat..." : "Online"}
+								</p>
+							</div>
+						</div>
+						<div className="flex items-center gap-2">
+							{!isChatMinimized && (
+								<button
+									onClick={handleChatMinimize}
+									className="p-1 hover:bg-white hover:bg-opacity-20 rounded transition-colors">
+									<Minimize2 className="w-4 h-4" />
+								</button>
+							)}
+							{isChatMinimized && (
+								<button
+									onClick={handleChatMaximize}
+									className="p-1 hover:bg-white hover:bg-opacity-20 rounded transition-colors">
+									<MessageCircle className="w-4 h-4" />
+								</button>
+							)}
+							<button
+								onClick={handleChatClose}
+								className="p-1 hover:bg-white hover:bg-opacity-20 rounded transition-colors">
+								<X className="w-4 h-4" />
+							</button>
+						</div>
+					</div>
+
+					{!isChatMinimized && (
+						<>
+							{/* Chat Messages */}
+							<div className="flex-1 p-4 overflow-y-auto h-[360px] space-y-4">
+								{isChatLoading ? (
+									<div className="flex justify-center items-center h-full">
+										<p className="text-gray-500">Memuat pesan...</p>
+									</div>
+								) : (
+									chatMessages.map((message) => (
+										<div
+											key={message.id}
+											className={`flex ${
+												message.sender === "user" ? "justify-end" : "justify-start"
+											}`}>
+											<div
+												className={`flex items-start gap-2 max-w-[80%] ${
+													message.sender === "user" ? "flex-row-reverse" : "flex-row"
+												}`}>
+												<img
+													className="w-6 h-6 rounded-full flex-shrink-0"
+													src={message.senderAvatar}
+													alt={message.senderName}
+												/>
+												<div
+													className={`rounded-lg p-3 ${
+														message.sender === "user"
+															? "bg-[#5289C7] text-white rounded-br-none"
+															: "bg-gray-100 text-gray-800 rounded-bl-none"
+													}`}>
+													<p className="text-sm">{message.text}</p>
+													<p
+														className={`text-xs mt-1 ${
+															message.sender === "user" ? "text-blue-100" : "text-gray-500"
+														}`}>
+														{formatTime(message.timestamp)}
+													</p>
+												</div>
+											</div>
+										</div>
+									))
+								)}
+							</div>
+
+							{/* Chat Input */}
+							<form
+								onSubmit={handleSendMessage}
+								className="p-4 border-t border-gray-200">
+								<div className="flex gap-2">
+									<input
+										type="text"
+										value={chatMessage}
+										onChange={(e) => setChatMessage(e.target.value)}
+										placeholder="Ketik pesan..."
+										disabled={isSendingMessage || isChatLoading}
+										className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#5289C7] focus:ring-1 focus:ring-[#5289C7] disabled:bg-gray-100"
+									/>
+									<button
+										type="submit"
+										disabled={!chatMessage.trim() || isSendingMessage || isChatLoading}
+										className={`px-4 py-2 rounded-lg transition-colors ${
+											chatMessage.trim() && !isSendingMessage && !isChatLoading
+												? "bg-[#5289C7] hover:bg-[#4a7bb8] text-white cursor-pointer"
+												: "bg-gray-300 text-gray-500 cursor-not-allowed"
+										}`}>
+										{isSendingMessage ? (
+											<div className="w-4 h-4 border-2 border-gray-300 border-t-white rounded-full animate-spin"></div>
+										) : (
+											<Send className="w-4 h-4" />
+										)}
+									</button>
+								</div>
+							</form>
+						</>
+					)}
+				</div>
+			)}
+
+			{/* Chat Notification Badge (when minimized) */}
+			{isChatOpen && isChatMinimized && (
+				<div className="fixed bottom-20 right-6 w-3 h-3 bg-red-500 rounded-full animate-pulse z-50"></div>
+			)}
 		</main>
 	);
 }

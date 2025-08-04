@@ -1,28 +1,28 @@
-import {
-	ChevronDown,
-	ChevronLeft,
-	ChevronRight,
-	HeartIcon,
-	SearchIcon,
-	ThumbsUpIcon,
-} from "lucide-react";
+import { HeartIcon, SearchIcon, StarIcon, ThumbsUpIcon } from "lucide-react";
 import Header from "../components/Header";
-import { TopCreatorData } from "../data/TopCreatorData";
-import Star from "../../public/icon/star";
-import Filter from "../../public/icon/filter";
-import Major from "../../public/icon/major";
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
 	favoriteNoteApi,
 	getAllNoteApi,
 	likeNoteApi,
+	searchNoteApi,
 	unFavoriteNoteApi,
 	unLikeNoteApi,
 } from "../services/notes";
+import { getTopCreatorApi } from "../services/creator";
 
 export default function Perpustakaan() {
 	const [allNotes, setAllNotes] = useState();
+	const [topCreator, setTopCreator] = useState();
+	const [searchKey, setSearchKey] = useState("");
+	const [isSearching, setIsSearching] = useState(false);
+
+	useEffect(() => {
+		getTopCreatorApi(localStorage.getItem("token")).then((result) =>
+			setTopCreator(result?.data)
+		);
+	}, []);
 
 	useEffect(() => {
 		getAllNoteApi(localStorage.getItem("token")).then((result) => {
@@ -30,13 +30,59 @@ export default function Perpustakaan() {
 		});
 	}, []);
 
+	const handleSearch = (e) => {
+		e.preventDefault();
+
+		// If search key is empty, get all notes
+		if (!searchKey || searchKey.trim() === "") {
+			getAllNoteApi(localStorage.getItem("token")).then((result) => {
+				setAllNotes(result?.data);
+				setIsSearching(false);
+			});
+			return;
+		}
+
+		setIsSearching(true);
+		searchNoteApi(localStorage.getItem("token"), searchKey.trim())
+			.then((result) => {
+				console.log(result?.data);
+				// Update the allNotes state with search results
+				setAllNotes(result?.data);
+			})
+			.catch((error) => {
+				console.error("Search failed:", error);
+				setIsSearching(false);
+			})
+			.finally(() => {
+				setIsSearching(false);
+			});
+	};
+
+	// Function to clear search and show all notes
+	const clearSearch = () => {
+		setSearchKey("");
+		setIsSearching(false);
+		getAllNoteApi(localStorage.getItem("token")).then((result) => {
+			setAllNotes(result?.data);
+		});
+	};
+
 	const likeNote = async (id) => {
 		try {
 			await likeNoteApi(id, localStorage.getItem("token"));
 
-			getAllNoteApi(localStorage.getItem("token")).then((result) => {
-				setAllNotes(result?.data);
-			});
+			// Refresh current view (either search results or all notes)
+			if (isSearching && searchKey.trim()) {
+				searchNoteApi(localStorage.getItem("token"), searchKey.trim()).then(
+					(result) => {
+						setAllNotes(result?.data);
+					}
+				);
+			} else {
+				getAllNoteApi(localStorage.getItem("token")).then((result) => {
+					setAllNotes(result?.data);
+				});
+			}
 		} catch (error) {
 			console.error("Failed to like note:", error);
 		}
@@ -46,9 +92,18 @@ export default function Perpustakaan() {
 		try {
 			await unLikeNoteApi(id, localStorage.getItem("token"));
 
-			getAllNoteApi(localStorage.getItem("token")).then((result) => {
-				setAllNotes(result?.data);
-			});
+			// Refresh current view (either search results or all notes)
+			if (isSearching && searchKey.trim()) {
+				searchNoteApi(localStorage.getItem("token"), searchKey.trim()).then(
+					(result) => {
+						setAllNotes(result?.data);
+					}
+				);
+			} else {
+				getAllNoteApi(localStorage.getItem("token")).then((result) => {
+					setAllNotes(result?.data);
+				});
+			}
 		} catch (error) {
 			console.error("Failed to unlike note:", error);
 		}
@@ -58,9 +113,18 @@ export default function Perpustakaan() {
 		try {
 			await favoriteNoteApi(id, localStorage.getItem("token"));
 
-			getAllNoteApi(localStorage.getItem("token")).then((result) => {
-				setAllNotes(result?.data);
-			});
+			// Refresh current view (either search results or all notes)
+			if (isSearching && searchKey.trim()) {
+				searchNoteApi(localStorage.getItem("token"), searchKey.trim()).then(
+					(result) => {
+						setAllNotes(result?.data);
+					}
+				);
+			} else {
+				getAllNoteApi(localStorage.getItem("token")).then((result) => {
+					setAllNotes(result?.data);
+				});
+			}
 		} catch (error) {
 			console.error("Failed to favorite note:", error);
 		}
@@ -70,9 +134,18 @@ export default function Perpustakaan() {
 		try {
 			await unFavoriteNoteApi(id, localStorage.getItem("token"));
 
-			getAllNoteApi(localStorage.getItem("token")).then((result) => {
-				setAllNotes(result?.data);
-			});
+			// Refresh current view (either search results or all notes)
+			if (isSearching && searchKey.trim()) {
+				searchNoteApi(localStorage.getItem("token"), searchKey.trim()).then(
+					(result) => {
+						setAllNotes(result?.data);
+					}
+				);
+			} else {
+				getAllNoteApi(localStorage.getItem("token")).then((result) => {
+					setAllNotes(result?.data);
+				});
+			}
 		} catch (error) {
 			console.error("Failed to unfavorite note:", error);
 		}
@@ -92,97 +165,67 @@ export default function Perpustakaan() {
 						Ga perlu khawatir lagi kalo catatan kamu ga lengkap, karena sekarang udah
 						ada Notery!
 					</p>
-					<form className="w-full">
-						<ul className="flex gap-2">
-							<li className="w-full flex items-center bg-white rounded-md p-3 gap-3 shadow-lg">
-								<SearchIcon className="text-gray-400" />
-								<input
-									className="w-full text-gray-400 placeholder-gray-400 outline-none"
-									type="text"
-									placeholder="Cari catatan..."
-								/>
-							</li>
-							<li>
-								<button className="flex items-center bg-white font-semibold p-3 rounded-md gap-2 shadow-lg">
-									Kategori
-									<ChevronDown />
-								</button>
-							</li>
-						</ul>
-					</form>
 				</div>
 				<div className="col-span-12 space-y-5">
 					<div className="bg-white rounded-xl shadow-lg p-5 space-y-5">
 						<div className="flex justify-between items-center">
 							<h1 className="text-xl font-semibold">🔥 Top Creator</h1>
-							<div className="flex gap-2">
-								<div className="flex items-center gap-3 border border-[#E5E5E5] rounded-md p-2">
-									<ChevronLeft className="text-gray-300" />
-								</div>
-								<div className="flex items-center gap-3 border border-[#E5E5E5] rounded-md p-2">
-									<ChevronRight />
-								</div>
-							</div>
 						</div>
 						<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 						<div className="grid grid-cols-12 gap-5">
-							{TopCreatorData.slice(0, 3).map((product, index) => (
-								<div key={index} className="col-span-4 rounded-md gap-5">
-									<div className="border border-[#E5E5E5] rounded-md p-5 space-y-5">
-										<div className="flex justify-between items-center">
-											<div className="flex items-center gap-3">
-												<img
-													className="w-14 h-14 rounded-lg"
-													src={product.creatorPhoto}
-													alt=""
-												/>
-												<div>
-													<h1 className="font-semibold">{product.creatorName}</h1>
-													<p className="text-gray-400">Top Creator</p>
+							{Array.isArray(topCreator) &&
+								topCreator.map((product, index) => (
+									<div key={index} className="col-span-4 rounded-md gap-5">
+										<div className="border border-[#E5E5E5] rounded-md p-5 space-y-5">
+											<div className="flex justify-between items-center">
+												<div className="flex items-center gap-3">
+													<img
+														className="w-14 h-14 rounded-lg"
+														src={product.foto_profil_url}
+														alt=""
+													/>
+													<div>
+														<h1 className="font-semibold">{product.username}</h1>
+														<p className="text-gray-400">Top Creator</p>
+													</div>
 												</div>
 											</div>
-											<div className="flex items-center gap-2 bg-[#FFFAEB] px-3 py-2">
-												<Major className={"w-7 h-7"} />
-												<p className="text-amber-500">{product.major}</p>
-											</div>
-										</div>
-										<div className="h-[0.5px] bg-[#E5E5E5]"></div>
-										<div className="flex justify-around items-center border border-[#E5E5E5] rounded-md py-3">
-											<div>
-												<p className="text-center font-semibold">{product.rating}</p>
-												<p className="text-gray-400">Rating</p>
-											</div>
-											<div className="w-[0.5px] h-10 bg-[#E5E5E5]"></div>
-											<div>
-												<p className="text-center font-semibold">{product.notes}</p>
-												<p className="text-gray-400">Catatan</p>
-											</div>
-											<div className="w-[0.5px] h-10 bg-[#E5E5E5]"></div>
-											<div>
-												<p className="text-center font-semibold">{product.sold}</p>
-												<p className="text-gray-400">Terjual</p>
+											<div className="h-[0.5px] bg-[#E5E5E5]"></div>
+											<div className="flex justify-around items-center border border-[#E5E5E5] rounded-md py-3">
+												<div>
+													<p className="text-center font-semibold">{product.rating}</p>
+													<p className="text-gray-400">Rating</p>
+												</div>
+												<div className="w-[0.5px] h-10 bg-[#E5E5E5]"></div>
+												<div>
+													<p className="text-center font-semibold">{product.catatan}</p>
+													<p className="text-gray-400">Catatan</p>
+												</div>
+												<div className="w-[0.5px] h-10 bg-[#E5E5E5]"></div>
+												<div>
+													<p className="text-center font-semibold">{product.terjual}</p>
+													<p className="text-gray-400">Terjual</p>
+												</div>
 											</div>
 										</div>
 									</div>
-								</div>
-							))}
+								))}
 						</div>
 					</div>
 					<div className="bg-white rounded-xl shadow-lg p-5 space-y-5">
 						<div className="flex justify-between items-center">
-							<h1 className="text-xl font-semibold">Temukan catatan</h1>
-							<div className="flex gap-2">
-								<div className="flex items-center gap-3 border border-[#E5E5E5] rounded-md px-5 py-2">
-									<p>Filter</p>
-									<Filter className={"w-5 h-5"} />
-								</div>
-								<div className="flex items-center gap-3 border border-[#E5E5E5] rounded-md p-2">
-									<ChevronLeft className="text-gray-300" />
-								</div>
-								<div className="flex items-center gap-3 border border-[#E5E5E5] rounded-md p-2">
-									<ChevronRight />
-								</div>
-							</div>
+							<h1 className="text-xl font-semibold">
+								{searchKey.trim()
+									? `Hasil pencarian: "${searchKey}"`
+									: "Temukan catatan"}
+							</h1>
+							{searchKey.trim() && (
+								<button
+									onClick={clearSearch}
+									className="text-sm text-gray-500 hover:text-gray-700 underline">
+									Tampilkan semua catatan
+								</button>
+							)}
 						</div>
 						<div className="h-[200px] bannerBackground2 flex flex-col justify-center items-center rounded-md gap-3">
 							<h1 className="text-2xl text-white font-semibold">
@@ -192,6 +235,28 @@ export default function Perpustakaan() {
 								Yuk jual catatan kamu. Pastikan lengkap, jelas, dan menarik ya!{" "}
 							</p>
 						</div>
+						<form onSubmit={handleSearch} className="w-full">
+							<ul className="flex gap-2">
+								<li className="w-full flex items-center bg-white rounded-md p-3 gap-3 shadow-xl">
+									<SearchIcon className="text-gray-400" />
+									<input
+										value={searchKey}
+										onChange={(e) => setSearchKey(e.target.value)}
+										className="w-full text-gray-400 placeholder-gray-400 outline-none"
+										type="text"
+										placeholder="Cari catatan..."
+									/>
+								</li>
+								<li>
+									<button
+										type="submit"
+										disabled={isSearching}
+										className="flex items-center bg-[#5289C7] text-white font-semibold p-3 rounded-md gap-2 shadow-lg disabled:opacity-50">
+										{isSearching ? "Mencari..." : "Cari"}
+									</button>
+								</li>
+							</ul>
+						</form>
 						<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 						<div className="grid grid-cols-12 gap-5">
 							{allNotes && Array.isArray(allNotes) && allNotes.length > 0 ? (
@@ -281,17 +346,12 @@ export default function Perpustakaan() {
 											<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 											<div className="flex justify-between items-center">
 												<div className="flex items-center gap-2">
-													<Star className="w-7 h-7" />
+													<StarIcon className="w-7 h-7 text-yellow-500 fill-yellow-400" />
 													<p className="text-amber-500 font-semibold">{product.rating}</p>
 												</div>
 												<div>
 													<p className="font-semibold">
-														Rp{" "}
-														{product.harga.toString().length === 5
-															? `${product.harga.toString().slice(0, 2)}.${product.harga
-																	.toString()
-																	.slice(2)}`
-															: product.harga}
+														Rp {new Intl.NumberFormat("id-ID").format(product.harga)}
 													</p>
 												</div>
 											</div>
@@ -300,7 +360,11 @@ export default function Perpustakaan() {
 								))
 							) : (
 								<div className="col-span-full text-center py-8">
-									<p className="text-gray-500">Tidak ada product notes tersedia</p>
+									<p className="text-gray-500">
+										{searchKey.trim()
+											? `Tidak ada catatan ditemukan untuk "${searchKey}"`
+											: "Tidak ada catatan tersedia"}
+									</p>
 								</div>
 							)}
 						</div>

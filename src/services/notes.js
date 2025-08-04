@@ -18,6 +18,22 @@ export const addNoteApi = async (credential, token) => {
   }
 }
 
+export const deleteNoteApi = async (id, token) => {
+  try {
+    const res = await axios.delete(`${API_BASE}/notes/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
+      }
+    })
+
+    return res.data
+  } catch (error) {
+    console.error("Error in deleteNoteApi:", error);
+    throw error;
+  }
+}
+
 export const getAllNoteApi = async (token) => {
   try {
     const res = await axios.get(`${API_BASE}/notes`, {
@@ -29,6 +45,20 @@ export const getAllNoteApi = async (token) => {
     return(res.data)
   } catch (error) {
     console.error("Error in getAllNoteApi:", error)
+  }
+}
+
+export const searchNoteApi = async (token, key) => {
+  try {
+    const res = await axios.get(`${API_BASE}/notes?search=${key}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    })
+
+    return(res.data)
+  } catch (error) {
+    console.error("Error in searchNoteApi:", error)
   }
 }
 
@@ -272,3 +302,76 @@ export const getPurchaseHistoryApi = async (token) => {
         throw error;
     }
 };
+
+// Get chat room messages
+export const createOrGetChatRoomApi = async (noteId, token) => {
+  try {
+    const res = await axios.post(`${API_BASE}/notes/${noteId}/chat`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+    })
+
+    return res.data
+  } catch (error) {
+    console.error("Error in createOrGetChatRoomApi:", error)
+    throw error
+  }
+}
+
+// Get chat room messages (sesuai dokumentasi: GET /api/chat-rooms/{chat_room_id}/messages)
+export const getChatRoomMessagesApi = async (chatRoomId, token) => {
+  try {
+    const res = await axios.get(`${API_BASE}/chat-rooms/${chatRoomId}/messages`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+    })
+
+    return res.data
+  } catch (error) {
+    console.error("Error in getChatRoomMessagesApi:", error)
+    throw error
+  }
+}
+
+// Send message to chat room (sesuai dokumentasi: POST /api/chat-rooms/{chat_room_id}/messages)
+export const sendChatMessageApi = async (chatRoomId, message, token) => {
+  try {
+    const res = await axios.post(`${API_BASE}/chat-rooms/${chatRoomId}/messages`, {
+      pesan: message
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+    })
+
+    return res.data
+  } catch (error) {
+    console.error("Error in sendChatMessageApi:", error)
+    throw error
+  }
+}
+
+export const getNoteFileApi = async (id, token) => {
+  try {
+    const res = await axios.get(`${API_BASE}/notes/${id}/files`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+    })
+
+    return res.data
+  } catch (error) {
+    console.error("Error in getNoteFileApi:", error)
+    throw error
+  }
+}

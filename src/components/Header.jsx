@@ -165,11 +165,15 @@ export default function Header() {
 	};
 
 	function imageTypeValidation(type) {
-		return ["pdf"].includes(type.split("/")[1]?.toLowerCase());
+		const allowedTypes = ["png", "jpg", "jpeg", "pdf"];
+		const fileExtension = type.split("/")[1]?.toLowerCase();
+		return allowedTypes.includes(fileExtension);
 	}
 
 	function handleBanner(files) {
 		const file = files[0];
+		if (!file) return;
+
 		const isValidType = imageTypeValidation(file.type);
 
 		setBannerFileName(file.name);
@@ -367,7 +371,7 @@ export default function Header() {
 													) : (
 														<div className="w-full flex items-center justify-between">
 															<p>Klik atau Drag and Drop untuk mengupload</p>
-															<p>PDF saja</p>
+															{/* <p>PDF saja</p> */}
 														</div>
 													)}
 													<input {...getInputProps()} />
@@ -376,7 +380,7 @@ export default function Header() {
 										</Dropzone>
 										{bannerErrorType && (
 											<p className="text-red-500 text-xs mt-1">
-												Format file tidak didukung. Gunakan JPG, PNG, atau JPEG.
+												Format file tidak didukung. Gunakan PDF, JPG, PNG, atau JPEG.
 											</p>
 										)}
 									</div>

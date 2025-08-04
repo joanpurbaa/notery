@@ -122,3 +122,27 @@ export const getTransactionsHistoryApi = async (token) => {
 
   return res;
 }
+
+export const getNotificationsApi = async (token) => {
+  const res = await axios.get(`${API_BASE}/notifications/users`, {
+    headers: {
+			Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }
+  })
+
+  return res;
+}
+
+export const getEarningsApi = async (token) => {
+  const res = await axios.get(`${API_BASE}/earnings`, {
+    headers: {
+			Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    }
+  })
+
+  return res;
+}

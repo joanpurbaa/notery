@@ -1,22 +1,30 @@
-import { ChevronRight, ChevronDown } from "lucide-react";
+import {
+	ChevronDown,
+	ThumbsUpIcon,
+	HeartIcon,
+	StarIcon,
+	CircleAlertIcon,
+	Megaphone,
+} from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
-
 import Header from "../components/Header";
-import { ProductData } from "../data/ProductData";
-import { TopCreatorData } from "../data/TopCreatorData";
 import { FakultasData } from "../data/FakultasData";
 import { ProdiData } from "../data/ProdiByFakultasData";
 import { MataKuliahData } from "../data/MataKuliahByProdiData";
-
-import Star from "../../public/icon/star";
 import Comment from "../../public/icon/comment";
-import Heart from "../../public/icon/heart";
-import ThumbsUp from "../../public/icon/thumbsUp";
 import Pen from "../../public/icon/pen";
 import Major from "../../public/icon/major";
 
-import { addNoteApi, showNoteByUserId } from "../services/notes";
+import {
+	addNoteApi,
+	deleteNoteApi,
+	favoriteNoteApi,
+	likeNoteApi,
+	showNoteByUserId,
+	unFavoriteNoteApi,
+	unLikeNoteApi,
+} from "../services/notes";
 import {
 	getFavoriteCourseApi,
 	addFavoriteCourseApi,
@@ -24,6 +32,8 @@ import {
 	getNoteByProfilApi,
 	getNoteStatusApi,
 	getTransactionsHistoryApi,
+	getNotificationsApi,
+	getEarningsApi,
 } from "../services/profile";
 
 export default function Profil() {
@@ -61,13 +71,16 @@ export default function Profil() {
 	const [noteStatus, setNoteStatus] = useState("");
 	const [transactionHistoryData, setTransactionHistoryData] = useState("");
 
+	const [notifications, setNotifications] = useState();
+
+	const [earnings, setEarnings] = useState();
+
 	useEffect(() => {
 		getNoteByProfilApi(localStorage.getItem("token")).then((result) =>
 			setProductStatus(result.data)
 		);
 
 		getNoteStatusApi(localStorage.getItem("token")).then((result) => {
-			console.log("Raw noteStatus data:", result.data);
 			setNoteStatus(result.data);
 		});
 
@@ -75,6 +88,119 @@ export default function Profil() {
 			setTransactionHistoryData(result.data.data);
 		});
 	}, [localStorage.getItem("token")]);
+
+	useEffect(() => {
+		getNotificationsApi(localStorage.getItem("token")).then((result) =>
+			setNotifications(result.data.data)
+		);
+	}, [localStorage.getItem("token")]);
+
+	useEffect(() => {
+		getEarningsApi(localStorage.getItem("token")).then((result) =>
+			setEarnings(result.data.data.total_income)
+		);
+	});
+
+	const likeNote = async (id) => {
+		try {
+			await likeNoteApi(id, localStorage.getItem("token"));
+
+			getNoteByProfilApi(localStorage.getItem("token")).then((result) =>
+				setProductStatus(result.data)
+			);
+		} catch (error) {
+			console.error("Failed to like note:", error);
+		}
+	};
+
+	const unLikeNote = async (id) => {
+		try {
+			await unLikeNoteApi(id, localStorage.getItem("token"));
+
+			getNoteByProfilApi(localStorage.getItem("token")).then((result) =>
+				setProductStatus(result.data)
+			);
+		} catch (error) {
+			console.error("Failed to unlike note:", error);
+		}
+	};
+
+	const favoriteNote = async (id) => {
+		try {
+			await favoriteNoteApi(id, localStorage.getItem("token"));
+
+			getNoteByProfilApi(localStorage.getItem("token")).then((result) =>
+				setProductStatus(result.data)
+			);
+		} catch (error) {
+			console.error("Failed to favorite note:", error);
+		}
+	};
+
+	const unFavoriteNote = async (id) => {
+		try {
+			await unFavoriteNoteApi(id, localStorage.getItem("token"));
+
+			getNoteByProfilApi(localStorage.getItem("token")).then((result) =>
+				setProductStatus(result.data)
+			);
+		} catch (error) {
+			console.error("Failed to unfavorite note:", error);
+		}
+	};
+
+	const deleteNote = (id) => {
+		deleteNoteApi(id, localStorage.getItem("token")).then((data) =>
+			console.log(data)
+		);
+	};
+
+	const formatTimeAgo = (timestamp) => {
+		try {
+			const now = new Date();
+			const date = new Date(timestamp);
+
+			if (isNaN(date.getTime())) {
+				return "Waktu tidak valid";
+			}
+
+			const diffInSeconds = Math.floor((now - date) / 1000);
+
+			if (diffInSeconds < 0) {
+				return "Baru saja";
+			}
+
+			if (diffInSeconds < 60) {
+				return diffInSeconds <= 1 ? "Baru saja" : `${diffInSeconds} detik lalu`;
+			}
+
+			const diffInMinutes = Math.floor(diffInSeconds / 60);
+			if (diffInMinutes < 60) {
+				return `${diffInMinutes} menit lalu`;
+			}
+
+			const diffInHours = Math.floor(diffInMinutes / 60);
+			if (diffInHours < 24) {
+				return `${diffInHours} jam lalu`;
+			}
+
+			const diffInDays = Math.floor(diffInHours / 24);
+			if (diffInDays < 30) {
+				return `${diffInDays} hari lalu`;
+			}
+
+			const diffInMonths = Math.floor(diffInDays / 30);
+			if (diffInMonths < 12) {
+				return `${diffInMonths} bulan lalu`;
+			}
+
+			const diffInYears = Math.floor(diffInMonths / 12);
+			return `${diffInYears} tahun lalu`;
+		} catch (error) {
+			console.error("Error formatting time:", error);
+			return "Waktu tidak valid";
+		}
+	};
 
 	const [formData, setFormData] = useState({
 		title: "",
@@ -94,7 +220,6 @@ export default function Profil() {
 	const userData = JSON.parse(localStorage.getItem("user"));
 	const filename = userData.foto_profil?.split("/").pop();
 	const imageUrl = `http://127.0.0.1:8000/storage/foto_profil/${filename}`;
-	const creator = TopCreatorData[0];
 
 	const getMataKuliahByProdi = (prodiId) => {
 		return MataKuliahData.filter((matkul) => matkul.prodi_id === prodiId);
@@ -261,6 +386,11 @@ export default function Profil() {
 		resetForm();
 		setAddPopUp(false);
 		setSuccessPopUp(!successPopUp);
+
+		getNoteStatusApi(localStorage.getItem("token")).then((result) => {
+			console.log("Raw noteStatus data:", result.data);
+			setNoteStatus(result.data);
+		});
 	};
 
 	const handleAcademicSubmit = async (e) => {
@@ -448,49 +578,91 @@ export default function Profil() {
 								<div className="space-y-1">
 									<p className="text-gray-400">Matkul Favorit</p>
 									<p className="font-semibold">
-										{Array.isArray(favoriteCourse)
-											? favoriteCourse[0]?.course?.nama_mk
-											: "Belum Diisi"}
+										{Array.isArray(favoriteCourse) && favoriteCourse.length == 0
+											? "Belum Diisi"
+											: favoriteCourse[0]?.course?.nama_mk}
 									</p>
 								</div>
 							</div>
 						</div>
 
-						<div className="sticky top-30 self-start col-span-3 bg-white rounded-xl shadow-lg p-5 space-y-5">
+						<div className="top-30 self-start col-span-3 bg-white rounded-xl shadow-lg p-5 space-y-5">
 							<div className="flex justify-between items-center">
-								<h3 className="text-xl font-semibold">Riwayat Transaksi</h3>
-								<ChevronRight className="w-8 h-8 border border-[#E5E5E5] rounded-md" />
+								<h3 className="text-xl font-semibold">Notifikasi</h3>
 							</div>
 							<div className="h-[0.5px] bg-[#E5E5E5]"></div>
-							{/* {TransactionHistoryData.map((transactionData, index) => (
-								<div
-									key={index}
-									className="flex border border-[#E5E5E5] p-3 rounded-md gap-3">
-									<img
-										className="w-[70px] h-[70px] rounded-md"
-										src={transactionData.image}
-										alt=""
-									/>
-									<div className="w-full flex flex-col justify-around">
-										<div className="flex justify-between">
-											<p
-												className={`${
-													transactionData.status == "Dibeli"
-														? "text-success-500"
-														: "text-amber-500"
-												} font-semibold`}>
-												{transactionData.status}
-											</p>
-											<p className="text-gray-400">{transactionData.time}j lalu</p>
-										</div>
-										<p className="font-semibold">{transactionData.title}</p>
+							{notifications !== undefined && notifications.length == 0 ? (
+								<p>Tidak ada notifikasi</p>
+							) : (
+								Array.isArray(notifications) &&
+								notifications.map((data, index) => (
+									<div
+										key={index}
+										className="flex flex-col border border-[#E5E5E5] p-3 rounded-md gap-3">
+										<p className="flex items-center font-semibold gap-3">
+											{data.type == "info" && (
+												<div className="bg-amber-300 p-2 rounded-full">
+													<CircleAlertIcon className="w-[30px] h-[30px] text-amber-500" />
+												</div>
+											)}
+											{data.type == "announcement" && (
+												<div className="bg-blue-300 p-2 rounded-full">
+													<Megaphone className="w-[30px] h-[30px] text-blue-500" />
+												</div>
+											)}
+											{data.type == "warning" && (
+												<div className="bg-red-300 p-2 rounded-full">
+													<CircleAlertIcon className="w-[30px] h-[30px] text-red-500" />
+												</div>
+											)}
+											{data.type == "warning" ? "Peringatan !" : data.title}
+										</p>
+										<p>{data.body}</p>
 									</div>
-								</div>
-							))} */}
+								))
+							)}
+						</div>
+
+						<div className="top-30 self-start col-span-3 bg-white rounded-xl shadow-lg p-5 space-y-5">
+							<div className="flex justify-between items-center">
+								<h3 className="text-xl font-semibold">Riwayat </h3>
+							</div>
+							<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 							{transactionHistoryData.length == 0 ? (
 								<p>Tidak ada transaksi</p>
 							) : (
-								console.log(transactionHistoryData)
+								transactionHistoryData.map((transactionData, index) => (
+									<div
+										key={index}
+										className="flex border border-[#E5E5E5] p-3 rounded-md gap-3">
+										<img
+											className="w-[70px] h-[70px] rounded-md object-cover"
+											src={transactionData.gambar_preview}
+											alt=""
+										/>
+										<div className="w-full flex flex-col justify-around">
+											<div className="flex justify-between">
+												<p
+													className={`${
+														transactionData.status == "Dibeli"
+															? "text-success-500"
+															: "text-amber-500"
+													} font-semibold`}>
+													{transactionData.status}
+												</p>
+												<p className="text-gray-400">
+													{formatTimeAgo(
+														transactionData.updateAt ||
+															transactionData.updatedAt ||
+															transactionData.created_at ||
+															new Date()
+													)}
+												</p>
+											</div>
+											<p className="font-semibold">{transactionData.judul}</p>
+										</div>
+									</div>
+								))
 							)}
 						</div>
 					</div>
@@ -499,12 +671,6 @@ export default function Profil() {
 						<div className="bg-white rounded-xl shadow-lg p-5 space-y-5">
 							<div className="flex justify-between items-center">
 								<h4 className="text-xl font-semibold">Deskripsi</h4>
-								<button
-									onClick={() => {}}
-									className="flex items-center gap-2 text bg-white border border-[#E5E5E5] rounded-lg px-4 py-2 shadow-2xl">
-									<span>Edit</span>
-									<Pen className="w-4 h-4" />
-								</button>
 							</div>
 							<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 							<div className="flex flex-col gap-5">
@@ -513,10 +679,12 @@ export default function Profil() {
 									<div className="flex flex-col gap-1">
 										<div className="flex flex-row gap-5 items-center">
 											<h1 className="font-semibold">{userData.username}</h1>
-											<span className="bg-amber-50 flex items-center flex-row gap-2 rounded-md px-1 py-1">
-												<Major className="w-5 h-5" />
-												<p className="text-amber-500">{creator.major}</p>
-											</span>
+											{userData.major && (
+												<span className="bg-amber-50 flex items-center flex-row gap-2 rounded-md px-1 py-1">
+													<Major className="w-5 h-5" />
+													<p className="text-amber-500">{userData.major}</p>
+												</span>
+											)}
 										</div>
 										<p className="text-gray-400">
 											Hi, kalian bisa beli catatan ku buat dapetin versi catetan yang lebih
@@ -575,10 +743,15 @@ export default function Profil() {
 													/>
 													<div className="absolute inset-0 flex flex-col justify-between p-5 bg-gradient-to-b from-transparent to-black/50">
 														<div></div>
-														<div className="w-full z-10">
-															<p className="text-2xl text-white font-semibold drop-shadow-lg">
+														<div className="w-full z-10 space-y-3">
+															<p className="text-2xl text-white drop-shadow-lg">
 																{note.judul}
 															</p>
+															<div
+																onClick={() => deleteNote(note.note_id)}
+																className="cursor-pointer w-full bg-red-400 text-white font-semibold text-center p-2 rounded-md">
+																Hapus
+															</div>
 														</div>
 													</div>
 												</div>
@@ -597,57 +770,175 @@ export default function Profil() {
 						</div>
 
 						<div className="bg-white rounded-xl shadow-lg p-5 space-y-5">
-							<h3 className="text-xl font-semibold pt-2">
-								Dijual ({ProductData.length})
-							</h3>
+							<div className="flex justify-between">
+								<h3 className="text-xl font-semibold">Dijual</h3>
+								<p className="">
+									Pemasukan : <span className="font-semibold">Rp {earnings}</span>
+								</p>
+							</div>
 							<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 							<div className="grid grid-cols-12 gap-5">
-								{ProductData.map((product, index) => (
-									<div key={index} className="col-span-6 rounded-md">
-										<div className="relative h-[250px] backgroundCover flex flex-col justify-between rounded-t-xl p-5">
-											<div className="z-10 w-full flex justify-end">
-												<div className="flex items-center bg-white px-5 py-3 rounded-md gap-2">
-													<ThumbsUp className="w-5 h-6" />
-													<p className="text-amber-500">Favorit</p>
+								{Array.isArray(productStatus.notes_dijual) &&
+								productStatus.notes_dijual.length !== 0 ? (
+									productStatus.notes_dijual.map((product, index) => (
+										<div key={index} className="col-span-6 rounded-md">
+											<div className="relative h-[250px] backgroundCover flex flex-col justify-between rounded-t-xl p-5">
+												<div className="z-10 w-full flex justify-end">
+													<div className="z-10 w-full flex justify-end">
+														{product.isFavorite ? (
+															<div
+																onClick={() => unFavoriteNote(product.note_id)}
+																className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
+																<ThumbsUpIcon className="w-6 h-6 text-amber-500 fill-amber-400" />
+																<p className="text-amber-500 font-medium">Favorit</p>
+															</div>
+														) : (
+															<div
+																onClick={() => favoriteNote(product.note_id)}
+																className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
+																<ThumbsUpIcon className="w-6 h-6 text-gray-500 fill-gray-400" />
+																<p className="text-gray-500 font-medium">Favorit</p>
+															</div>
+														)}
+													</div>
+												</div>
+												<div className="w-full z-10">
+													<p className="text-2xl text-white">{product.title}</p>
+												</div>
+												<div className="absolute top-0 left-0 z-0 w-full h-full bg-gradient-to-b from-transparent to-black">
+													<div className="w-full h-full flex justify-center items-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+														<a
+															className="bg-white text-black font-medium px-10 py-3 rounded-4xl"
+															href={`/note/${product.note_id}`}>
+															Lihat
+														</a>
+													</div>
 												</div>
 											</div>
-											<div className="w-full z-10">
-												<p className="text-2xl text-white">{product.title}</p>
-											</div>
-											<div className="absolute top-0 left-0 z-0 w-full h-full bg-gradient-to-b from-transparent to-black">
-												<div className="w-full h-full flex justify-center items-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-													<a
-														className="bg-white text-black font-medium px-7 py-3 rounded-md"
-														href="">
-														Lihat
-													</a>
+											<div className="flex justify-between border-l border-r border-b border-[#E5E5E5] p-5 rounded-b-xl">
+												<div className="flex gap-5">
+													<div className="flex gap-2">
+														<StarIcon className="w-7 h-7 text-yellow-500 fill-yellow-400" />
+														<p className="text-amber-500 font-semibold text-xl">
+															{product.rating}
+														</p>
+													</div>
+													<div className="flex gap-2">
+														<Comment className="w-7 h-7" />
+														<p className="text-xl">{product.comments}</p>
+													</div>
+													<div className="flex gap-2">
+														{product.isLiked ? (
+															<HeartIcon
+																onClick={() => unLikeNote(product.note_id)}
+																className="cursor-pointer w-7 h-7 text-red-600 fill-red-400"
+															/>
+														) : (
+															<HeartIcon
+																onClick={() => likeNote(product.note_id)}
+																className="cursor-pointer w-7 h-7 text-gray-400 fill-transparent"
+															/>
+														)}
+														<p className="text-xl">{product.jumlah_like}</p>
+													</div>
+												</div>
+												<div className="flex gap-1">
+													<p className="text-xl">{product.jumlah_terjual}</p>
+													<p className="text-xl">Terjual</p>
 												</div>
 											</div>
 										</div>
-										<div className="flex justify-between border-l border-r border-b border-[#E5E5E5] p-5 rounded-b-xl">
-											<div className="flex gap-5">
-												<div className="flex gap-2">
-													<Star className="w-7 h-7" />
-													<p className="text-amber-500 font-semibold text-xl">
-														{product.star}
-													</p>
+									))
+								) : (
+									<p className="col-span-12 text-center py-10 text-gray-500">
+										Tidak ada catatan yang kamu jual
+									</p>
+								)}
+							</div>
+						</div>
+
+						<div className="bg-white rounded-xl shadow-lg p-5 space-y-5">
+							<h3 className="text-xl font-semibold pt-2">Dibeli</h3>
+							<div className="h-[0.5px] bg-[#E5E5E5]"></div>
+							<div className="grid grid-cols-12 gap-5">
+								{Array.isArray(productStatus.notes_dibeli) &&
+								productStatus.notes_dibeli.length !== 0 ? (
+									productStatus.notes_dibeli.map((product, index) => (
+										<div key={index} className="col-span-6 rounded-md">
+											<div
+												style={{
+													backgroundImage: `url(http://localhost:8000${product.gambar_preview})`,
+												}}
+												className="relative h-[250px] flex flex-col justify-between bg-no-repeat bg-cover rounded-t-xl p-5">
+												<div className="z-10 w-full flex justify-end">
+													{product.isFavorite ? (
+														<div
+															onClick={() => unFavoriteNote(product.note_id)}
+															className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
+															<ThumbsUpIcon className="w-6 h-6 text-amber-500 fill-amber-400" />
+															<p className="text-amber-500 font-medium">Favorit</p>
+														</div>
+													) : (
+														<div
+															onClick={() => favoriteNote(product.note_id)}
+															className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
+															<ThumbsUpIcon className="w-6 h-6 text-gray-500 fill-gray-400" />
+															<p className="text-gray-500 font-medium">Favorit</p>
+														</div>
+													)}
 												</div>
-												<div className="flex gap-2">
-													<Comment className="w-7 h-7" />
-													<p className="text-xl">{product.comments}</p>
+												<div className="w-full z-10">
+													<p className="text-2xl text-white">{product.title}</p>
 												</div>
-												<div className="flex gap-2">
-													<Heart className="w-7 h-7" color="black" />
-													<p className="text-xl">{product.like}</p>
+												<div className="absolute top-0 left-0 z-0 w-full h-full bg-gradient-to-b from-transparent to-black">
+													<div className="w-full h-full flex justify-center items-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+														<a
+															className="bg-white text-black font-medium px-10 py-3 rounded-4xl"
+															href={`/note/${product.note_id}`}>
+															Lihat
+														</a>
+													</div>
 												</div>
 											</div>
-											<div className="flex gap-1">
-												<p className="text-xl">{product.sold}</p>
-												<p className="text-xl">Terjual</p>
+											<div className="flex justify-between border-l border-r border-b border-[#E5E5E5] p-5 rounded-b-xl">
+												<div className="flex gap-5">
+													<div className="flex gap-2">
+														<StarIcon className="w-7 h-7 text-yellow-500 fill-yellow-400" />
+														<p className="text-amber-500 font-semibold text-xl">
+															{product.rating}
+														</p>
+													</div>
+													<div className="flex gap-2">
+														<Comment className="w-7 h-7" />
+														<p className="text-xl">{product.comments}</p>
+													</div>
+													<div className="flex gap-2">
+														{product.isLiked ? (
+															<HeartIcon
+																onClick={() => unLikeNote(product.note_id)}
+																className="cursor-pointer w-7 h-7 text-red-600 fill-red-400"
+															/>
+														) : (
+															<HeartIcon
+																onClick={() => likeNote(product.note_id)}
+																className="cursor-pointer w-7 h-7 text-gray-400 fill-transparent"
+															/>
+														)}
+														<p className="text-xl">{product.jumlah_like}</p>
+													</div>
+												</div>
+												<div className="flex gap-1">
+													<p className="text-xl">{product.jumlah_terjual}</p>
+													<p className="text-xl">Terjual</p>
+												</div>
 											</div>
 										</div>
-									</div>
-								))}
+									))
+								) : (
+									<p className="col-span-12 text-center py-10 text-gray-500">
+										Tidak ada catatan yang kamu beli
+									</p>
+								)}
 							</div>
 						</div>
 					</div>
@@ -830,11 +1121,9 @@ export default function Profil() {
 														: "hover:border-[#5289C7] focus:border-[#5289C7] focus:ring-1 focus:ring-[#5289C7]"
 												}`}>
 												<span className="truncate">
-													{favoriteCourse
-														? Array.isArray(favoriteCourse)
-															? favoriteCourse[0]?.course?.nama_mk
-															: "Pilih Mata Kuliah Favorit"
-														: "Pilih Mata Kuliah Favorit"}
+													{Array.isArray(favoriteCourse) && favoriteCourse.length == 0
+														? "Pilih mata kuliah favorit"
+														: favoriteCourse[0]?.course?.nama_mk}
 												</span>
 												<ChevronDown
 													className={`w-4 h-4 ml-2 transition-transform ${

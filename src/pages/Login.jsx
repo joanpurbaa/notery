@@ -15,12 +15,24 @@ export default function Login() {
 	const navigate = useNavigate();
 	const { login } = useAuth();
 
+	const adminAccounts = ["admin1", "admin2"];
+	const adminPassword = "rahasia123";
+
 	const mutation = useMutation({
 		mutationFn: loginApi,
 		onSuccess: (data) => {
-			loginApi({ username, password });
-			login(data?.data?.user, data?.data?.access_token);
-			navigate("/");
+			const isAdmin =
+				adminAccounts.includes(username) && password === adminPassword;
+
+			if (isAdmin) {
+				login(data?.data?.user, data?.data?.access_token);
+				localStorage.setItem("admin", "true");
+				navigate("/admin");
+			} else {
+				login(data?.data?.user, data?.data?.access_token);
+				localStorage.setItem("admin", "false");
+				navigate("/");
+			}
 		},
 		onError: (error) => {
 			if (error?.response?.data?.message) {
@@ -39,10 +51,6 @@ export default function Login() {
 
 		mutation.mutate(credential);
 	};
-
-	if (localStorage.getItem("token")) {
-		return <Navigate to="/" replace />;
-	}
 
 	return (
 		<main className="w-full h-screen authenticationBackground flex flex-col justify-between p-5">

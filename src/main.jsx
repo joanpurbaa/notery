@@ -16,6 +16,10 @@ import Profil from "./pages/Profil.jsx";
 import DetailProduct from "./pages/DetailProduct.jsx";
 import LatestNote from "./pages/LatestNote.jsx";
 import MostLikedNote from "./pages/MostLikedNote.jsx";
+import Admin from "./pages/Admin.jsx";
+import AnalysisResult from "./pages/AnalysisResult.jsx";
+import Reported from "./pages/Reported.jsx";
+import DetailAnalysisResult from "./pages/DetailAnalysisResult.jsx";
 
 const ErrorBoundary = () => (
 	<div className="min-h-screen flex items-center justify-center">
@@ -96,13 +100,38 @@ const router = createBrowserRouter([
 		element: <DetailProduct />,
 		errorElement: <ErrorBoundary />,
 	},
+	{
+		path: "/admin",
+		element: <Admin />,
+		errorElement: <ErrorBoundary />,
+	},
+	{
+		path: "/analysis-result",
+		element: <AnalysisResult />,
+		errorElement: <ErrorBoundary />,
+	},
+	{
+		path: "/analysis-result/:slug",
+		element: <DetailAnalysisResult />,
+		errorElement: <ErrorBoundary />,
+	},
+	{
+		path: "/analysis-result/:slug/deskripsi",
+		element: <DetailAnalysisResult />,
+		errorElement: <ErrorBoundary />,
+	},
+	{
+		path: "/reported",
+		element: <Reported />,
+		errorElement: <ErrorBoundary />,
+	},
 ]);
 
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			retry: 1,
-			staleTime: 5 * 60 * 1000, 
+			staleTime: 5 * 60 * 1000,
 			refetchOnWindowFocus: false,
 		},
 	},

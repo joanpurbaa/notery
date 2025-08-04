@@ -9,10 +9,12 @@ import {
 } from "../services/notes";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { getTopCreatorApi } from "../services/creator";
 
 export default function Home() {
 	const [latestNotes, setLatestNotes] = useState();
 	const [mostLikedNotes, setMostLikedNotes] = useState();
+	const [topCreator, setTopCreator] = useState();
 
 	useEffect(() => {
 		latestNoteApi(localStorage.getItem("token")).then((result) => {
@@ -24,6 +26,12 @@ export default function Home() {
 		mostLikedNoteApi(localStorage.getItem("token")).then((result) => {
 			setMostLikedNotes(result?.data);
 		});
+	}, []);
+
+	useEffect(() => {
+		getTopCreatorApi(localStorage.getItem("token")).then((result) =>
+			setTopCreator(result?.data)
+		);
 	}, []);
 
 	const likeNote = (id) => {
@@ -200,12 +208,7 @@ export default function Home() {
 														)}
 													</p>
 													<p className="font-semibold">
-														Rp{" "}
-														{product.harga.toString().length === 5
-															? `${product.harga.toString().slice(0, 2)}.${product.harga
-																	.toString()
-																	.slice(2)}`
-															: product.harga}
+														Rp {new Intl.NumberFormat("id-ID").format(product.harga)}
 													</p>
 												</div>
 											</div>
@@ -291,12 +294,12 @@ export default function Home() {
 															{product.isLiked ? (
 																<HeartIcon
 																	onClick={() => unLikeNote(product.note_id)}
-																	className="w-7 h-7 text-red-600 fill-red-400"
+																	className="cursor-pointer w-7 h-7 text-red-600 fill-red-400"
 																/>
 															) : (
 																<HeartIcon
 																	onClick={() => likeNote(product.note_id)}
-																	className="w-7 h-7"
+																	className="cursor-pointer w-7 h-7"
 																/>
 															)}
 															<p className="font-semibold">{product.jumlah_like}</p>
@@ -325,48 +328,66 @@ export default function Home() {
 				</div>
 				<div className="col-span-12 bg-white rounded-xl shadow-lg p-5 space-y-5">
 					<div className="flex justify-between items-center">
-						<h1 className="text-xl font-semibold">Top 5 Creator</h1>
+						<h1 className="text-xl font-semibold">Top Creator</h1>
 					</div>
 					<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 					<div className="grid grid-cols-12 gap-8">
-						{TopCreatorData.map((creator, index) => (
-							<div key={index} className="col-span-4 flex flex-col gap-2">
-								<div className="bg-white rounded-xl p-2 border border-[#E5E5E5] shadow-lg">
-									<div className="flex gap-2 items-center justify-between px-2 py-2">
-										<div className="flex items-center gap-2">
-											<img
-												className="w-14 h-14 rounded-lg"
-												alt="Profile"
-												src={creator.creatorPhoto}
-											/>
-											<div className="flex flex-col gap-1">
-												<h1 className="font-semibold">{creator.creatorName}</h1>
-												<p className="text-gray-400">{creator.status}</p>
+						{Array.isArray(topCreator) &&
+							topCreator.map((product, index) => (
+								<div key={index} className="col-span-4 rounded-md gap-5">
+									<div className="border border-[#E5E5E5] rounded-md p-5 space-y-5">
+										<div className="flex justify-between items-center">
+											<div className="flex items-center gap-3">
+												<img
+													className="w-14 h-14 rounded-lg"
+													src={product.foto_profil_url}
+													alt=""
+												/>
+												<div>
+													<h1 className="font-semibold">{product.username}</h1>
+													<p className="text-gray-400">Top Creator</p>
+												</div>
 											</div>
 										</div>
-										<span className="flex gap-2">
-											<HeartIcon className="w-6 h-6 text-red-500 fill-red-400" />
-											25
-										</span>
+										<div className="h-[0.5px] bg-[#E5E5E5]"></div>
+										<div className="flex justify-around items-center border border-[#E5E5E5] rounded-md py-3">
+											<div>
+												<p className="text-center font-semibold">{product.rating}</p>
+												<p className="text-gray-400">Rating</p>
+											</div>
+											<div className="w-[0.5px] h-10 bg-[#E5E5E5]"></div>
+											<div>
+												<p className="text-center font-semibold">{product.catatan}</p>
+												<p className="text-gray-400">Catatan</p>
+											</div>
+											<div className="w-[0.5px] h-10 bg-[#E5E5E5]"></div>
+											<div>
+												<p className="text-center font-semibold">{product.terjual}</p>
+												<p className="text-gray-400">Terjual</p>
+											</div>
+										</div>
 									</div>
 								</div>
-							</div>
-						))}
+							))}
 					</div>
 				</div>
 			</section>
-			<section class="xl:hidden pt-24 relative bg-white">
-				<img class="bg-mobile w-full" src="../public/image/mobile-bg.webp" alt="" />
-				<div class="container-fluid absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-					<div class="pt-24 bt-home-mobile">
-						<a href="#" class="inline-block mr-4">
+			<section className="xl:hidden pt-24 relative bg-white">
+				<img
+					className="bg-mobile w-full"
+					src="../public/image/mobile-bg.webp"
+					alt=""
+				/>
+				<div className="container-fluid absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+					<div className="pt-24 bt-home-mobile">
+						<a href="#" className="inline-block mr-4">
 							<img
 								className="ps-5 w-96"
 								src="../public/image/bt-andro.webp"
 								alt="Google Play"
 							/>
 						</a>
-						<a href="#" class="">
+						<a href="#" className="">
 							<img className="ps-2 w-96" src="../public/image/bt-ios.webp" alt="iOS" />
 						</a>
 					</div>
