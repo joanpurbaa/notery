@@ -120,3 +120,47 @@ export const sendWarningToUserApi = async (userId, warningMessage, token) => {
 
   return res.data;
 }
+
+export const closeAccessApi = async (id, token) => {
+  const res = await axios.patch(`${API_BASE}/admin/users/${id}/ban`, {}, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    }
+  })
+
+  window.location.href = '/reported'
+
+  return res.data
+}
+
+export const openAccessApi = async (id, token) => {
+  const res = await axios.patch(`${API_BASE}/admin/users/${id}/unban`, {}, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    }
+  })
+
+  window.location.href = '/reported'
+
+  return res.data
+}
+
+export const createAnnouncementApi = async (announcementData, token) => {
+  const formData = new FormData();
+  
+  formData.append('title', announcementData.title);
+  formData.append('body', announcementData.body);
+
+  const res = await axios.post(`${API_BASE}/admin/notifications/announcements`, formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    }
+  });
+
+  return res.data;
+};

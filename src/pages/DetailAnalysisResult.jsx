@@ -4,12 +4,15 @@ import {
 	handleQueueSubmissionApi,
 } from "../services/admin";
 import AdminHeader from "../components/AdminHeader";
+import { CheckIcon, XIcon } from "lucide-react";
 
 export default function DetailAnalysisResult() {
 	const productId = window.location.pathname.split("/")[2];
 	const deskripsiPath = window.location.pathname.split("/")[3];
 
 	const [detailNote, setDetailNote] = useState(null);
+	const [successPopUp, setSuccessPopUp] = useState(false);
+	const [rejectPopUp, setRejectPopUp] = useState(false);
 
 	useEffect(() => {
 		getDetailAnalysisResultApi(productId, localStorage.getItem("token")).then(
@@ -17,18 +20,32 @@ export default function DetailAnalysisResult() {
 		);
 	}, []);
 
-  console.log(detailNote)
-
 	const approveSubmission = () => {
 		const formData = new FormData();
 
 		formData.append("action", "approve");
 
-		handleQueueSubmissionApi(
-			productId,
-			formData,
-			localStorage.getItem("token")
-		);
+		handleQueueSubmissionApi(productId, formData, localStorage.getItem("token"))
+			.then(() => {
+				setSuccessPopUp(true);
+			})
+			.catch((error) => {
+				console.error("Error approving submission:", error);
+			});
+	};
+
+	const rejectSubmission = () => {
+		const formData = new FormData();
+
+		formData.append("action", "reject");
+
+		handleQueueSubmissionApi(productId, formData, localStorage.getItem("token"))
+			.then(() => {
+				setRejectPopUp(true);
+			})
+			.catch((error) => {
+				console.error("Error rejecting submission:", error);
+			});
 	};
 
 	if (!detailNote) {
@@ -68,7 +85,9 @@ export default function DetailAnalysisResult() {
 						className="cursor-pointer bg-[#5289C7] text-center text-white font-semibold rounded-md p-3">
 						Setujui
 					</div>
-					<div className="cursor-pointer bg-red-400 text-center text-white font-semibold rounded-md p-3">
+					<div
+						onClick={rejectSubmission}
+						className="cursor-pointer bg-red-400 text-center text-white font-semibold rounded-md p-3">
 						Tolak
 					</div>
 				</div>
@@ -101,6 +120,42 @@ export default function DetailAnalysisResult() {
 					)}
 				</div>
 			</section>
+
+			{successPopUp && (
+				<section className="fixed top-0 left-0 z-50 w-screen h-screen flex justify-center items-center bg-black/50 p-4">
+					<div className="flex flex-col items-center gap-7 bg-white rounded-lg shadow-xl p-6 relative animate-fade-in max-h-[90vh] overflow-y-auto">
+						<p className="text-lg font-semibold">Verifikasi berhasil</p>
+						<CheckIcon className="w-32 h-32 border-4 border-green-400 text-green-400 rounded-full p-5" />
+						<p>Catatan berhasil diverifikasi!</p>
+						<button
+							onClick={() => {
+								setSuccessPopUp(false);
+								window.location.href = "/analysis-result";
+							}}
+							className="w-full bg-red-400 text-white font-semibold p-3 rounded-md">
+							Tutup
+						</button>
+					</div>
+				</section>
+			)}
+
+			{rejectPopUp && (
+				<section className="fixed top-0 left-0 z-50 w-screen h-screen flex justify-center items-center bg-black/50 p-4">
+					<div className="flex flex-col items-center gap-7 bg-white rounded-lg shadow-xl p-6 relative animate-fade-in max-h-[90vh] overflow-y-auto">
+						<p className="text-lg font-semibold">Penolakan berhasil</p>
+						<XIcon className="w-32 h-32 border-4 border-red-400 text-red-400 rounded-full p-5" />
+						<p>Catatan berhasil ditolak!</p>
+						<button
+							onClick={() => {
+								setRejectPopUp(false);
+								window.location.href = "/analysis-result";
+							}}
+							className="w-full bg-red-400 text-white font-semibold p-3 rounded-md">
+							Tutup
+						</button>
+					</div>
+				</section>
+			)}
 		</main>
 	);
 }

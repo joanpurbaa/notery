@@ -1,7 +1,12 @@
-import { SearchIcon, StarIcon, CheckIcon } from "lucide-react";
+import { SearchIcon, CheckIcon } from "lucide-react";
 import AdminHeader from "../components/AdminHeader";
 import { useEffect, useState, useCallback } from "react";
-import { getAllUsersApi, sendWarningToUserApi } from "../services/admin";
+import {
+	closeAccessApi,
+	getAllUsersApi,
+	openAccessApi,
+	sendWarningToUserApi,
+} from "../services/admin";
 
 export default function Reported() {
 	const [allUsers, setAllUsers] = useState([]);
@@ -18,7 +23,6 @@ export default function Reported() {
 		pageSize: 15,
 	});
 
-	// Debounce function untuk mencegah terlalu banyak API calls
 	const debounce = (func, delay) => {
 		let timeoutId;
 		return (...args) => {
@@ -52,7 +56,6 @@ export default function Reported() {
 		}
 	};
 
-	// Debounced search function
 	const debouncedSearch = useCallback(
 		debounce((searchValue) => {
 			fetchUsers(searchValue, 1);
@@ -75,6 +78,14 @@ export default function Reported() {
 	const handleWarnClick = (user) => {
 		setSelectedUser(user);
 		setWarningMessage("");
+	};
+
+	const handleCloseAccess = (id) => {
+		closeAccessApi(id, localStorage.getItem("token"));
+	};
+
+	const handleOpenAccess = (id) => {
+		openAccessApi(id, localStorage.getItem("token"));
 	};
 
 	const handleSendWarning = async (e) => {
@@ -109,7 +120,7 @@ export default function Reported() {
 	const handleSearchChange = (e) => {
 		const value = e.target.value;
 		setSearchTerm(value);
-		// Reset selected user when searching
+
 		if (selectedUser) {
 			setSelectedUser(null);
 		}
@@ -172,15 +183,24 @@ export default function Reported() {
 													className="cursor-pointer bg-zinc-800 text-white px-3 py-2 rounded-md text-sm hover:bg-zinc-700 transition-colors">
 													Warn
 												</button>
-												<div className="cursor-pointer bg-red-500 text-white px-3 py-2 rounded-md text-sm hover:bg-red-600 transition-colors">
-													Close access
-												</div>
+												<button
+													onClick={() =>
+														data.isBanned
+															? handleOpenAccess(data.user_id)
+															: handleCloseAccess(data.user_id)
+													}
+													className={`cursor-pointer ${
+														data.isBanned
+															? "bg-green-400 hover:bg-green-500"
+															: "bg-red-400 hover:bg-red-500"
+													} text-white px-3 py-2 rounded-md text-sm transition-colors`}>
+													{data.isBanned ? "Open access" : "Close access"}
+												</button>
 											</div>
 										</div>
 									</div>
 								))}
 
-								{/* Pagination */}
 								{pagination.totalPages > 1 && (
 									<div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
 										<div className="text-sm text-gray-600">
@@ -262,7 +282,7 @@ export default function Reported() {
 								<button
 									type="submit"
 									disabled={!selectedUser || !warningMessage.trim() || sendingWarning}
-									className="w-full bg-primary-700 text-white font-semibold p-3 rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-primary-800 transition-colors flex items-center justify-center gap-2">
+									className="cursor-pointer w-full bg-primary-700 text-white font-semibold p-3 rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-primary-800 transition-colors flex items-center justify-center gap-2">
 									{sendingWarning ? (
 										<>
 											<div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

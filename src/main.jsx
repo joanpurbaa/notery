@@ -9,7 +9,6 @@ import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Perpustakaan from "./pages/Perpustakaan.jsx";
-import Koleksi from "./pages/Koleksi.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import TambahProduk from "./pages/AddProduct.jsx";
 import Profil from "./pages/Profil.jsx";
@@ -68,11 +67,6 @@ const router = createBrowserRouter([
 	{
 		path: "/perpustakaan",
 		element: <Perpustakaan />,
-		errorElement: <ErrorBoundary />,
-	},
-	{
-		path: "/koleksi",
-		element: <Koleksi />,
 		errorElement: <ErrorBoundary />,
 	},
 	{
@@ -142,6 +136,13 @@ createRoot(document.getElementById("root")).render(
 		<QueryClientProvider client={queryClient}>
 			<AuthProvider>
 				<RouterProvider router={router} />
+				<a target="_blank" href="https://wa.me/6282275338090">
+					<img
+						className="fixed bottom-5 right-2"
+						src="./image/whatsapp.png"
+						alt=""
+					/>
+				</a>
 			</AuthProvider>
 		</QueryClientProvider>
 	</StrictMode>

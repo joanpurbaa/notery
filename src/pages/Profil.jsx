@@ -33,7 +33,6 @@ import {
 	getNoteStatusApi,
 	getTransactionsHistoryApi,
 	getNotificationsApi,
-	getEarningsApi,
 } from "../services/profile";
 
 export default function Profil() {
@@ -73,8 +72,6 @@ export default function Profil() {
 
 	const [notifications, setNotifications] = useState();
 
-	const [earnings, setEarnings] = useState();
-
 	useEffect(() => {
 		getNoteByProfilApi(localStorage.getItem("token")).then((result) =>
 			setProductStatus(result.data)
@@ -94,12 +91,6 @@ export default function Profil() {
 			setNotifications(result.data.data)
 		);
 	}, [localStorage.getItem("token")]);
-
-	useEffect(() => {
-		getEarningsApi(localStorage.getItem("token")).then((result) =>
-			setEarnings(result.data.data.total_income)
-		);
-	});
 
 	const likeNote = async (id) => {
 		try {
@@ -150,8 +141,8 @@ export default function Profil() {
 	};
 
 	const deleteNote = (id) => {
-		deleteNoteApi(id, localStorage.getItem("token")).then((data) =>
-			console.log(data)
+		deleteNoteApi(id, localStorage.getItem("token")).then(
+			() => (window.location.href = "/profil")
 		);
 	};
 
@@ -219,7 +210,7 @@ export default function Profil() {
 
 	const userData = JSON.parse(localStorage.getItem("user"));
 	const filename = userData.foto_profil?.split("/").pop();
-	const imageUrl = `http://127.0.0.1:8000/storage/foto_profil/${filename}`;
+	const imageUrl = `http://localhost:8000/storage/foto_profil/${filename}`;
 
 	const getMataKuliahByProdi = (prodiId) => {
 		return MataKuliahData.filter((matkul) => matkul.prodi_id === prodiId);
@@ -539,6 +530,8 @@ export default function Profil() {
 		  )
 		: [];
 
+	console.log(noteStatus);
+
 	return (
 		<>
 			<main className="w-full h-full bg-[#F9F9F9]">
@@ -714,7 +707,6 @@ export default function Profil() {
 								</div>
 							</div>
 						</div>
-
 						<div className="bg-white rounded-xl shadow-lg p-5 space-y-5">
 							<h3 className="text-xl font-semibold pt-2">Menunggu verifikasi</h3>
 							<div className="h-[0.5px] bg-[#E5E5E5]"></div>
@@ -723,23 +715,12 @@ export default function Profil() {
 									noteStatus.menunggu &&
 									Array.isArray(noteStatus.menunggu) &&
 									noteStatus.menunggu.map((note, index) => {
-										const imageUrl = note.gambar_preview?.startsWith("http")
-											? note.gambar_preview
-											: `http://127.0.0.1:8000/storage/${note.gambar_preview}`;
-
 										return (
 											<div key={note.note_id || index} className="col-span-4 rounded-md">
 												<div className="relative w-full h-[250px] rounded-xl overflow-hidden">
 													<img
-														src={imageUrl}
-														alt={note.judul || "Preview"}
+														src={`http://localhost:8000/storage/${note.gambar_preview}`}
 														className="absolute inset-0 w-full h-full object-cover"
-														onLoad={() => console.log(`Image loaded: ${imageUrl}`)}
-														onError={(e) => {
-															console.error(`Failed to load image: ${imageUrl}`);
-															console.error("Error details:", e);
-															e.target.style.display = "none";
-														}}
 													/>
 													<div className="absolute inset-0 flex flex-col justify-between p-5 bg-gradient-to-b from-transparent to-black/50">
 														<div></div>
@@ -772,9 +753,6 @@ export default function Profil() {
 						<div className="bg-white rounded-xl shadow-lg p-5 space-y-5">
 							<div className="flex justify-between">
 								<h3 className="text-xl font-semibold">Dijual</h3>
-								<p className="">
-									Pemasukan : <span className="font-semibold">Rp {earnings}</span>
-								</p>
 							</div>
 							<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 							<div className="grid grid-cols-12 gap-5">
@@ -782,28 +760,30 @@ export default function Profil() {
 								productStatus.notes_dijual.length !== 0 ? (
 									productStatus.notes_dijual.map((product, index) => (
 										<div key={index} className="col-span-6 rounded-md">
-											<div className="relative h-[250px] backgroundCover flex flex-col justify-between rounded-t-xl p-5">
+											<div
+												className="relative h-[300px] flex flex-col justify-between bg-no-repeat bg-center bg-cover rounded-t-xl p-5"
+												style={{
+													backgroundImage: `url(${product.gambar_preview})`,
+												}}>
 												<div className="z-10 w-full flex justify-end">
-													<div className="z-10 w-full flex justify-end">
-														{product.isFavorite ? (
-															<div
-																onClick={() => unFavoriteNote(product.note_id)}
-																className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
-																<ThumbsUpIcon className="w-6 h-6 text-amber-500 fill-amber-400" />
-																<p className="text-amber-500 font-medium">Favorit</p>
-															</div>
-														) : (
-															<div
-																onClick={() => favoriteNote(product.note_id)}
-																className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
-																<ThumbsUpIcon className="w-6 h-6 text-gray-500 fill-gray-400" />
-																<p className="text-gray-500 font-medium">Favorit</p>
-															</div>
-														)}
-													</div>
+													{product.isFavorite ? (
+														<div
+															onClick={() => unFavoriteNote(product.note_id)}
+															className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
+															<ThumbsUpIcon className="w-6 h-6 text-amber-500 fill-amber-400" />
+															<p className="text-amber-500 font-medium">Favorit</p>
+														</div>
+													) : (
+														<div
+															onClick={() => favoriteNote(product.note_id)}
+															className="cursor-pointer flex items-center bg-white px-5 py-3 rounded-md gap-2">
+															<ThumbsUpIcon className="w-6 h-6 text-gray-500 fill-gray-400" />
+															<p className="text-gray-500 font-medium">Favorit</p>
+														</div>
+													)}
 												</div>
 												<div className="w-full z-10">
-													<p className="text-2xl text-white">{product.title}</p>
+													<p className="text-2xl text-white">{product.judul}</p>
 												</div>
 												<div className="absolute top-0 left-0 z-0 w-full h-full bg-gradient-to-b from-transparent to-black">
 													<div className="w-full h-full flex justify-center items-center opacity-0 hover:opacity-100 transition-opacity duration-300">
@@ -815,36 +795,38 @@ export default function Profil() {
 													</div>
 												</div>
 											</div>
-											<div className="flex justify-between border-l border-r border-b border-[#E5E5E5] p-5 rounded-b-xl">
-												<div className="flex gap-5">
-													<div className="flex gap-2">
+											<div className="flex flex-col border-l border-r border-b border-[#E5E5E5] p-5 rounded-b-xl gap-5">
+												<div className="flex gap-2">
+													{product.tags &&
+													Array.isArray(product.tags) &&
+													product.tags.length > 0 ? (
+														product.tags.map((tag, tagIndex) => (
+															<div key={tagIndex} className="bg-gray-100 px-4 py-2 rounded-md">
+																<p className="text-sm">
+																	{typeof tag === "string"
+																		? tag
+																		: tag.name || tag.subjectName || "Tag"}
+																</p>
+															</div>
+														))
+													) : (
+														<div className="bg-gray-100 px-4 py-2 rounded-md">
+															<p className="text-sm">Tidak ada tag</p>
+														</div>
+													)}
+												</div>
+												<p className="line-clamp-3">{product.deskripsi}</p>
+												<div className="h-[0.5px] bg-[#E5E5E5]"></div>
+												<div className="flex justify-between items-center">
+													<div className="flex items-center gap-2">
 														<StarIcon className="w-7 h-7 text-yellow-500 fill-yellow-400" />
-														<p className="text-amber-500 font-semibold text-xl">
-															{product.rating}
+														<p className="text-amber-500 font-semibold">{product.rating}</p>
+													</div>
+													<div>
+														<p className="font-semibold">
+															Rp {new Intl.NumberFormat("id-ID").format(product.harga)}
 														</p>
 													</div>
-													<div className="flex gap-2">
-														<Comment className="w-7 h-7" />
-														<p className="text-xl">{product.comments}</p>
-													</div>
-													<div className="flex gap-2">
-														{product.isLiked ? (
-															<HeartIcon
-																onClick={() => unLikeNote(product.note_id)}
-																className="cursor-pointer w-7 h-7 text-red-600 fill-red-400"
-															/>
-														) : (
-															<HeartIcon
-																onClick={() => likeNote(product.note_id)}
-																className="cursor-pointer w-7 h-7 text-gray-400 fill-transparent"
-															/>
-														)}
-														<p className="text-xl">{product.jumlah_like}</p>
-													</div>
-												</div>
-												<div className="flex gap-1">
-													<p className="text-xl">{product.jumlah_terjual}</p>
-													<p className="text-xl">Terjual</p>
 												</div>
 											</div>
 										</div>

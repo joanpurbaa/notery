@@ -1,6 +1,5 @@
-import { ChevronLeft, ChevronRight, HeartIcon, StarIcon } from "lucide-react";
+import { HeartIcon, StarIcon } from "lucide-react";
 import Header from "../components/Header";
-import { TopCreatorData } from "../data/TopCreatorData";
 import {
 	latestNoteApi,
 	likeNoteApi,
@@ -21,6 +20,8 @@ export default function Home() {
 			setLatestNotes(result?.data);
 		});
 	}, []);
+
+  console.log(latestNotes)
 
 	useEffect(() => {
 		mostLikedNoteApi(localStorage.getItem("token")).then((result) => {

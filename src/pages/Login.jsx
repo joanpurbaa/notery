@@ -1,7 +1,7 @@
 import { AlertCircle, Eye, EyeClosed } from "lucide-react";
 import Logo from "../../public/icon/logo";
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { loginApi } from "../services/auth";
 import { useAuth } from "../contexts/AuthContext";

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 
 export default function DropDown({ label, value, setValue, list, Open, setOpen }) {

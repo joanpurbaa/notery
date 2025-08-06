@@ -1,27 +1,34 @@
-import { CircleAlertIcon, ImageIcon, PlusIcon, SendIcon } from "lucide-react";
+import { CircleAlertIcon, PlusIcon } from "lucide-react";
 import AdminHeader from "../components/AdminHeader";
 import {
 	addNotesSubmissionToQueueApi,
 	getAllReportApi,
 	notesSubmissionApi,
+	createAnnouncementApi,
 } from "../services/admin";
 import { useEffect, useState } from "react";
 
 export default function Admin() {
 	const [allReports, setAllReports] = useState();
 	const [notesSubmission, setNotesSubmission] = useState();
+	const [announcementData, setAnnouncementData] = useState({
+		title: "",
+		body: "",
+		files: [],
+	});
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	useEffect(() => {
 		getAllReportApi(localStorage.getItem("token")).then((data) =>
 			setAllReports(data.data)
 		);
-	});
+	}, []);
 
 	useEffect(() => {
 		notesSubmissionApi(localStorage.getItem("token")).then((data) =>
 			setNotesSubmission(data.data)
 		);
-	});
+	}, []);
 
 	const handleSubmissionToQueue = (id) => {
 		addNotesSubmissionToQueueApi(id, localStorage.getItem("token")).then((data) =>
@@ -32,6 +39,43 @@ export default function Admin() {
 			setNotesSubmission(data.data)
 		);
 	};
+
+	const handleAnnouncementChange = (field, value) => {
+		setAnnouncementData((prev) => ({
+			...prev,
+			[field]: value,
+		}));
+	};
+
+	const handleAnnouncementSubmit = async (e) => {
+		e.preventDefault();
+
+		if (!announcementData.title.trim() || !announcementData.body.trim()) {
+			return;
+		}
+
+		setIsSubmitting(true);
+
+		try {
+			await createAnnouncementApi(announcementData, localStorage.getItem("token"));
+			// Reset form after successful submission
+			setAnnouncementData({
+				title: "",
+				body: "",
+				files: [],
+			});
+			// Reset file input
+			const fileInput = document.getElementById("files");
+			if (fileInput) fileInput.value = "";
+		} catch (error) {
+			console.error("Error creating announcement:", error);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	const isFormValid =
+		announcementData.title.trim() && announcementData.body.trim();
 
 	const formatTimeAgo = (timestamp) => {
 		try {
@@ -158,29 +202,47 @@ export default function Admin() {
 								</div>
 							))}
 					</div>
-					<form className="col-span-6 bg-white rounded-xl shadow-lg p-5">
+					<form
+						onSubmit={handleAnnouncementSubmit}
+						className="col-span-6 bg-white rounded-xl shadow-lg p-5">
 						<ul className="space-y-3">
 							<li className="flex flex-col gap-2">
-								<label htmlFor="">Judul</label>
+								<label htmlFor="title">Judul</label>
 								<textarea
-									name=""
-									id=""
+									id="title"
+									name="title"
+									value={announcementData.title}
+									onChange={(e) => handleAnnouncementChange("title", e.target.value)}
 									rows={5}
 									className="border border-gray-400 rounded-md resize-none p-3"
-									placeholder="Masukkan judul"></textarea>
+									placeholder="Masukkan judul"
+									required
+								/>
 							</li>
 							<li className="flex flex-col gap-2">
-								<label htmlFor="">Deskripsi</label>
+								<label htmlFor="body">Deskripsi</label>
 								<textarea
-									name=""
-									id=""
-									rows={18}
+									id="body"
+									name="body"
+									value={announcementData.body}
+									onChange={(e) => handleAnnouncementChange("body", e.target.value)}
+									rows={15}
 									className="border border-gray-400 rounded-md resize-none p-3"
-									placeholder="Masukkan deskripsi"></textarea>
+									placeholder="Masukkan deskripsi"
+									required
+								/>
 							</li>
 							<li className="flex justify-end gap-2">
-								<ImageIcon className="w-[30px] h-[30px] text-gray-400" />
-								<SendIcon className="w-[30px] h-[30px] text-gray-400" />
+								<button
+									type="submit"
+									disabled={!isFormValid || isSubmitting}
+									className={`w-full font-semibold p-3 rounded-md transition-all duration-200 ${
+										isFormValid && !isSubmitting
+											? "bg-[#5289C7] text-white cursor-pointer hover:bg-[#4a7ab8]"
+											: "bg-gray-300 text-gray-500 cursor-not-allowed"
+									}`}>
+									{isSubmitting ? "Mengirim..." : "Kirim"}
+								</button>
 							</li>
 						</ul>
 					</form>

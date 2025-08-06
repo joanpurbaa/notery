@@ -1,7 +1,5 @@
 import {
-	ChevronDown,
 	MessageCircle,
-	PlusIcon,
 	StarIcon,
 	ThumbsDown,
 	ThumbsUpIcon,
@@ -100,12 +98,10 @@ export default function DetailProduct() {
 		};
 	}, []);
 
-	// Load chat room when chat is opened
 	const loadChatRoom = async () => {
 		try {
 			setIsChatLoading(true);
 
-			// Step 1: Create or get chat room
 			const chatRoomResponse = await createOrGetChatRoomApi(
 				productId,
 				localStorage.getItem("token")
@@ -118,7 +114,6 @@ export default function DetailProduct() {
 
 			setChatRoomId(chatRoomId);
 
-			// Step 2: Load existing messages
 			const messagesResponse = await getChatRoomMessagesApi(
 				chatRoomId,
 				localStorage.getItem("token")
@@ -127,21 +122,17 @@ export default function DetailProduct() {
 			const messages = messagesResponse?.data || [];
 
 			const getCurrentUserId = () => {
-				// Implementasikan sesuai dengan struktur aplikasi Anda
-				// Bisa dari localStorage, JWT token, atau user context
 				const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 				return userData.id || userData.user_id;
 			};
 
-			// PERBAIKAN UTAMA: Tentukan siapa user saat ini
-			const currentUserId = getCurrentUserId(); // Implementasikan fungsi ini
+			const currentUserId = getCurrentUserId();
 
 			const transformedMessages = messages.map((msg, index) => {
-				// Logika untuk menentukan apakah pesan dari user saat ini atau lawan chat
 				const isCurrentUserMessage =
 					msg.sender_id === currentUserId ||
-					msg.sender_type === "buyer" || // Sesuaikan dengan logika API Anda
-					msg.user_id === currentUserId; // Atau field lain yang menandakan pengirim
+					msg.sender_type === "buyer" ||
+					msg.user_id === currentUserId;
 
 				return {
 					id: msg.id || index,
@@ -280,7 +271,6 @@ export default function DetailProduct() {
 		}
 	};
 
-	// Chat functions
 	const handleChatToggle = async () => {
 		if (!isChatOpen) {
 			setIsChatOpen(true);
@@ -312,34 +302,27 @@ export default function DetailProduct() {
 		try {
 			setIsSendingMessage(true);
 
-			// Add message to UI immediately for better UX
 			const newMessage = {
 				id: Date.now(),
 				text: chatMessage,
-				sender: "user", // Ini konsisten sebagai user
+				sender: "user",
 				timestamp: new Date(),
 				senderName: "You",
 				senderAvatar: "/api/placeholder/40/40",
 			};
 
 			setChatMessages((prev) => [...prev, newMessage]);
-			const messageToSend = chatMessage; // Simpan pesan sebelum di-clear
+			const messageToSend = chatMessage;
 			setChatMessage("");
 
-			// Send message to API
 			await sendChatMessageApi(
 				chatRoomId,
 				messageToSend,
 				localStorage.getItem("token")
 			);
-
-			// PERBAIKAN: Jangan reload semua messages, cukup konfirmasi pesan terkirim
-			// Atau jika harus reload, pastikan mapping sender_type yang benar
 		} catch (error) {
 			console.error("Error sending message:", error);
-			// Remove the optimistic message if sending failed
 			setChatMessages((prev) => prev.slice(0, -1));
-			// setChatMessage(messageToSend); // Restore the message in input
 			alert("Gagal mengirim pesan. Silakan coba lagi.");
 		} finally {
 			setIsSendingMessage(false);
@@ -389,6 +372,8 @@ export default function DetailProduct() {
 			window.open(data.data.files[0].path_file, "_blank")
 		);
 	};
+
+  console.log(chatMessages);
 
 	if (!localStorage.getItem("token")) {
 		return <Navigate to="/login" replace />;
@@ -457,7 +442,7 @@ export default function DetailProduct() {
 							<div className="flex gap-2">
 								<div
 									onClick={handleChatToggle}
-									className="cursor-pointer h-full border-2 border-[#5289c7] p-2 rounded-md hover:bg-[#5289c7] hover:bg-opacity-10 transition-colors">
+									className="cursor-pointer h-full border-2 border-[#5289c7] p-2 rounded-md hover:bg-opacity-10 transition-colors">
 									<MessageCircle className="h-full w-10 fill-[#5289c7] text-[#5289c7]" />
 								</div>
 								<button
@@ -594,13 +579,11 @@ export default function DetailProduct() {
 				)}
 			</section>
 
-			{/* Chat Window */}
 			{isChatOpen && (
 				<div
 					className={`fixed bottom-4 right-4 bg-white rounded-lg shadow-2xl border border-gray-200 transition-all duration-300 ${
 						isChatMinimized ? "w-80 h-14" : "w-96 h-[500px]"
 					} z-50`}>
-					{/* Chat Header */}
 					<div className="flex items-center justify-between p-4 border-b border-gray-200 bg-[#5289C7] text-white rounded-t-lg">
 						<div className="flex items-center gap-3">
 							<img
@@ -642,7 +625,6 @@ export default function DetailProduct() {
 
 					{!isChatMinimized && (
 						<>
-							{/* Chat Messages */}
 							<div className="flex-1 p-4 overflow-y-auto h-[360px] space-y-4">
 								{isChatLoading ? (
 									<div className="flex justify-center items-center h-full">
@@ -661,7 +643,7 @@ export default function DetailProduct() {
 												}`}>
 												<img
 													className="w-6 h-6 rounded-full flex-shrink-0"
-													src={message.senderAvatar}
+													src={message.foto_profil}
 													alt={message.senderName}
 												/>
 												<div
@@ -684,7 +666,6 @@ export default function DetailProduct() {
 								)}
 							</div>
 
-							{/* Chat Input */}
 							<form
 								onSubmit={handleSendMessage}
 								className="p-4 border-t border-gray-200">
@@ -718,7 +699,6 @@ export default function DetailProduct() {
 				</div>
 			)}
 
-			{/* Chat Notification Badge (when minimized) */}
 			{isChatOpen && isChatMinimized && (
 				<div className="fixed bottom-20 right-6 w-3 h-3 bg-red-500 rounded-full animate-pulse z-50"></div>
 			)}

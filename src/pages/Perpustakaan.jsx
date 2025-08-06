@@ -33,7 +33,6 @@ export default function Perpustakaan() {
 	const handleSearch = (e) => {
 		e.preventDefault();
 
-		// If search key is empty, get all notes
 		if (!searchKey || searchKey.trim() === "") {
 			getAllNoteApi(localStorage.getItem("token")).then((result) => {
 				setAllNotes(result?.data);
@@ -46,7 +45,6 @@ export default function Perpustakaan() {
 		searchNoteApi(localStorage.getItem("token"), searchKey.trim())
 			.then((result) => {
 				console.log(result?.data);
-				// Update the allNotes state with search results
 				setAllNotes(result?.data);
 			})
 			.catch((error) => {
@@ -58,7 +56,6 @@ export default function Perpustakaan() {
 			});
 	};
 
-	// Function to clear search and show all notes
 	const clearSearch = () => {
 		setSearchKey("");
 		setIsSearching(false);
@@ -71,7 +68,6 @@ export default function Perpustakaan() {
 		try {
 			await likeNoteApi(id, localStorage.getItem("token"));
 
-			// Refresh current view (either search results or all notes)
 			if (isSearching && searchKey.trim()) {
 				searchNoteApi(localStorage.getItem("token"), searchKey.trim()).then(
 					(result) => {
@@ -92,7 +88,6 @@ export default function Perpustakaan() {
 		try {
 			await unLikeNoteApi(id, localStorage.getItem("token"));
 
-			// Refresh current view (either search results or all notes)
 			if (isSearching && searchKey.trim()) {
 				searchNoteApi(localStorage.getItem("token"), searchKey.trim()).then(
 					(result) => {
@@ -113,7 +108,6 @@ export default function Perpustakaan() {
 		try {
 			await favoriteNoteApi(id, localStorage.getItem("token"));
 
-			// Refresh current view (either search results or all notes)
 			if (isSearching && searchKey.trim()) {
 				searchNoteApi(localStorage.getItem("token"), searchKey.trim()).then(
 					(result) => {
@@ -134,7 +128,6 @@ export default function Perpustakaan() {
 		try {
 			await unFavoriteNoteApi(id, localStorage.getItem("token"));
 
-			// Refresh current view (either search results or all notes)
 			if (isSearching && searchKey.trim()) {
 				searchNoteApi(localStorage.getItem("token"), searchKey.trim()).then(
 					(result) => {
