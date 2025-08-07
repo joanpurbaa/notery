@@ -815,7 +815,9 @@ export default function Profil() {
 														</div>
 													)}
 												</div>
-												<p className="line-clamp-3">{product.deskripsi}</p>
+												<p style={{ whiteSpace: "pre-line" }} className="line-clamp-3">
+													{product.deskripsi}
+												</p>
 												<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 												<div className="flex justify-between items-center">
 													<div className="flex items-center gap-2">
@@ -849,7 +851,7 @@ export default function Profil() {
 										<div key={index} className="col-span-6 rounded-md">
 											<div
 												style={{
-													backgroundImage: `url(http://localhost:8000${product.gambar_preview})`,
+													backgroundImage: `url(${product.gambar_preview})`,
 												}}
 												className="relative h-[250px] flex flex-col justify-between bg-no-repeat bg-cover rounded-t-xl p-5">
 												<div className="z-10 w-full flex justify-end">

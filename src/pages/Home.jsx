@@ -176,7 +176,9 @@ export default function Home() {
 											</div>
 											<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 											<div className="flex flex-col gap-4 flex-1">
-												<p className="line-clamp-3 flex-1">
+												<p
+													style={{ whiteSpace: "pre-line" }}
+													className="line-clamp-3 flex-1">
 													{product.deskripsi || "Deskripsi tidak tersedia"}
 												</p>
 												<div className="flex gap-2">

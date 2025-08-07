@@ -373,7 +373,7 @@ export default function DetailProduct() {
 		);
 	};
 
-  console.log(chatMessages);
+	console.log(chatMessages);
 
 	if (!localStorage.getItem("token")) {
 		return <Navigate to="/login" replace />;
@@ -572,7 +572,7 @@ export default function DetailProduct() {
 									</form>
 								</div>
 							) : (
-								<p>{detailNote.deskripsi}</p>
+								<p style={{ whiteSpace: "pre-line" }}>{detailNote.deskripsi}</p>
 							)}
 						</div>
 					</>

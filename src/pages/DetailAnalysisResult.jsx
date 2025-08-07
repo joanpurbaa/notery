@@ -116,7 +116,7 @@ export default function DetailAnalysisResult() {
 							Klik disini untuk melihat
 						</a>
 					) : (
-						<p>{detailNote.deskripsi}</p>
+						<p style={{ whiteSpace: "pre-line" }}>{detailNote.deskripsi}</p>
 					)}
 				</div>
 			</section>

@@ -335,7 +335,9 @@ export default function Perpustakaan() {
 													</div>
 												)}
 											</div>
-											<p className="line-clamp-3">{product.deskripsi}</p>
+											<p style={{ whiteSpace: "pre-line" }} className="line-clamp-3">
+												{product.deskripsi}
+											</p>
 											<div className="h-[0.5px] bg-[#E5E5E5]"></div>
 											<div className="flex justify-between items-center">
 												<div className="flex items-center gap-2">
